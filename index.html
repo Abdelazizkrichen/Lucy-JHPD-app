@@ -327,6 +327,7 @@ input[type=file]{display:none}
         ✦ Générer (<span id="selcnt">0</span>)
       </button>
     </div>
+    <div id="selBanner" style="display:none;padding:7px 16px;font-size:11px;font-family:'Space Mono',monospace;border-bottom:1px solid var(--b);transition:all .3s;flex-shrink:0"></div>
     <div class="grid-scroll"><div class="grid" id="grid"></div></div>
   </div>
 
@@ -405,6 +406,7 @@ input[type=file]{display:none}
       <label>Clé API Groq <a href="https://console.groq.com/keys" target="_blank">→ Obtenir gratuitement</a></label>
       <input type="password" id="mkey" placeholder="gsk_..." oninput="chkModal()">
       <div class="guide">① Créez un compte sur console.groq.com → ② Menu "API Keys" → ③ "Create API key" → ④ Copiez la clé ici</div>
+      <div style="margin-top:6px;padding:8px 10px;background:rgba(255,184,0,.08);border:1px solid rgba(255,184,0,.25);border-radius:6px;font-size:10px;color:var(--y);line-height:1.7">⚠ <strong>Free tier Groq</strong> — 30 req/min · Génération séquentielle · Retry automatique si limite atteinte<br>Volume illimité → <a href="https://console.groq.com/settings/billing" target="_blank" style="color:var(--y);text-decoration:underline">passer en payant</a></div>
     </div>
 
     <!-- CV -->
@@ -782,11 +784,18 @@ async function scoreOne(job) {
 }
 
 // ── GROQ
-async function groq(messages,maxTokens=1500,temp=0.65) {
+async function groq(messages,maxTokens=1500,temp=0.65,retry=0) {
   const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
     method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+gkey},
     body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:maxTokens,temperature:temp,messages})
   });
+  if(res.status===429){
+    if(retry>=3) throw new Error('Groq rate limit — réessayez dans 1 minute');
+    const wait_ms = (retry+1)*15000; // 15s, 30s, 45s
+    toast('Rate limit Groq — attente '+(wait_ms/1000)+'s...','info');
+    await wait(wait_ms);
+    return groq(messages,maxTokens,temp,retry+1);
+  }
   if(!res.ok){ const e=await res.text(); throw new Error('Groq '+res.status+': '+e.substring(0,100)); }
   return (await res.json()).choices[0].message.content;
 }
@@ -834,14 +843,53 @@ function render() {
 }
 
 // ── SELECT
-function toggleSel(id){ if(sel.has(id))sel.delete(id);else sel.add(id); updSel(); render(); }
+function toggleSel(id){
+  if(sel.has(id)){ sel.delete(id); }
+  else {
+    if(sel.size>=10){ toast('Maximum 10 — au-delà le rate limit Groq bloque tout','err'); return; }
+    sel.add(id);
+  }
+  updSel(); render();
+}
 function selAll(){
   const q=document.getElementById('srch').value.toLowerCase();
   const vis=jobs.filter(j=>!q||((j.title||'').toLowerCase().includes(q)||(j.company||'').toLowerCase().includes(q)));
   if(sel.size===vis.length) sel.clear(); else vis.forEach(j=>sel.add(j.id));
   updSel(); render();
 }
-function updSel(){ const n=sel.size; document.getElementById('selcnt').textContent=n; document.getElementById('genbtn').classList.toggle('show',n>0); }
+function updSel(){
+  const n=sel.size;
+  document.getElementById('selcnt').textContent=n;
+  document.getElementById('genbtn').classList.toggle('show',n>0);
+  const banner=document.getElementById('selBanner');
+  if(n===0){ banner.style.display='none'; return; }
+  banner.style.display='block';
+  // Calcul temps estimé (20s/candidature + délai adaptatif)
+  const delai=n<=3?3:n<=6?4:5;
+  const sec=n*(20+delai);
+  const tps=sec<60?sec+'s':Math.ceil(sec/60)+'min';
+  let bg,color,border,msg,blocked=false;
+  if(n<=3){
+    bg='rgba(0,214,143,.08)';color='var(--g)';border='rgba(0,214,143,.3)';
+    msg='✓ '+n+' sélectionnée'+(n>1?'s':'')+' — Rapide ~'+tps+' — séquentiel automatique';
+  } else if(n<=6){
+    bg='rgba(255,184,0,.08)';color='var(--y)';border='rgba(255,184,0,.3)';
+    msg='⚡ '+n+' sélectionnées — Modéré ~'+tps+' — délais anti-rate-limit inclus';
+  } else if(n<=9){
+    bg='rgba(255,120,0,.08)';color='#ff7800';border='rgba(255,120,0,.3)';
+    msg='⚠ '+n+' sélectionnées — Long ~'+tps+' — retries automatiques si besoin';
+  } else {
+    bg='rgba(255,79,109,.1)';color='var(--r)';border='rgba(255,79,109,.4)';
+    msg='🔴 Maximum atteint (10) — sélection bloquée pour éviter le rate limit Groq';
+    blocked=true;
+  }
+  banner.style.cssText='display:block;padding:7px 16px;font-size:11px;font-family:Space Mono,monospace;border-bottom:1px solid '+border+';background:'+bg+';color:'+color+';flex-shrink:0;transition:all .3s';
+  banner.textContent=msg;
+  // Désactiver le bouton générer si max atteint
+  const gbtn=document.getElementById('genbtn');
+  if(blocked){ gbtn.style.opacity='.4'; gbtn.style.pointerEvents='none'; }
+  else { gbtn.style.opacity=''; gbtn.style.pointerEvents=''; }
+}
 function setChip(f,el){ filter=f; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); render(); }
 
 // ── RESET JOBS
@@ -859,9 +907,15 @@ async function genSelected(){
   const ids=[...sel]; sel.clear(); updSel();
   ids.forEach(id=>genSet.add(id)); render();
   document.getElementById('genbar').classList.add('show');
-  toast('Génération de '+ids.length+' candidature(s) — ~'+ids.length*20+'s...','info');
-  for(let i=0;i<ids.length;i++){ await genOne(ids[i]); if(i<ids.length-1) await wait(1500); }
+  const delai = ids.length<=3?3000:ids.length<=6?4000:5000;
+  const estim = Math.round(ids.length*(20+delai/1000));
+  toast('Génération de '+ids.length+' candidature(s) — ~'+estim+'s','info');
+  for(let i=0;i<ids.length;i++){
+    await genOne(ids[i]);
+    if(i<ids.length-1) await wait(delai);
+  }
   document.getElementById('genbar').classList.remove('show');
+  toast('✦ Toutes les candidatures sont prêtes','ok');
 }
 
 async function genOne(jobId) {

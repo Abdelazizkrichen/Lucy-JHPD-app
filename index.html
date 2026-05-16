@@ -397,7 +397,10 @@ input[type=file]{display:none}
 <!-- SETUP MODAL -->
 <div class="ov hide" id="ov">
   <div class="modal">
-    <h2>⚙ Configuration</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+      <h2 style="margin:0">⚙ Configuration</h2>
+      <span id="closeCfg" onclick="forceCloseSetup()" style="font-size:20px;cursor:pointer;color:var(--m);line-height:1;padding:4px 8px;border-radius:6px" onmouseover="this.style.color='var(--t)'" onmouseout="this.style.color='var(--m)'">✕</span>
+    </div>
     <p class="sub">Tout reste dans votre navigateur. Aucune donnée envoyée à nos serveurs.</p>
 
     <!-- GROQ -->
@@ -439,7 +442,7 @@ input[type=file]{display:none}
 
     <div class="mrow">
       <button class="mbtn p" id="msave" onclick="saveSetup()" disabled>Enregistrer →</button>
-      <button class="mbtn s" onclick="closeSetup()">Annuler</button>
+      <button class="mbtn s" onclick="forceCloseSetup()">Annuler</button>
     </div></div>
     </div>
 
@@ -692,6 +695,7 @@ function openSetup() {
 }
 
 function closeSetup() { if (gkey && cvTxt) document.getElementById('ov').classList.add('hide'); }
+function forceCloseSetup() { document.getElementById('ov').classList.add('hide'); }
 
 function chkModal() {
   const k = document.getElementById('mkey').value.trim();

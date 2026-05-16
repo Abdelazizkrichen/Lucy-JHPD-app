@@ -576,20 +576,28 @@ async function sendMagicLink() {
 function skipLogin() { /* Auth obligatoire */ }
 
 async function signInGoogle() {
-  if (!sbClient) { toast('Supabase non configuré','err'); return; }
+  if (!sbClient) { toast('Supabase non configuré — rechargez la page','err'); return; }
   try {
     const redirectTo = window.location.origin + window.location.pathname.replace(/\/+$/, '');
-    const {error} = await sbClient.auth.signInWithOAuth({
+    const {data, error} = await sbClient.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo }
+      options: {
+        redirectTo,
+        skipBrowserRedirect: false,
+        queryParams: { access_type: 'offline', prompt: 'consent' }
+      }
     });
     if (error) {
       if (error.message && error.message.toLowerCase().includes('provider')) {
-        toast('Google non activé — activez-le dans Supabase → Authentication → Providers → Google','err');
+        toast('Google non activé dans Supabase → Authentication → Providers','err');
       } else {
-        throw error;
+        toast('Erreur: '+error.message,'err');
       }
       return;
+    }
+    // Si l'URL est disponible et que la redirection n'a pas eu lieu (extension bloque)
+    if (data?.url && window.location.href === window.location.href) {
+      window.location.href = data.url;
     }
   } catch(e) { toast('Erreur Google: '+e.message,'err'); }
 }

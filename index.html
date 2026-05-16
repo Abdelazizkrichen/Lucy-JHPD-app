@@ -562,7 +562,14 @@ async function signInGoogle() {
       provider: 'google',
       options: { redirectTo }
     });
-    if (error) throw error;
+    if (error) {
+      if (error.message && error.message.toLowerCase().includes('provider')) {
+        toast('Google non activé — activez-le dans Supabase → Authentication → Providers → Google','err');
+      } else {
+        throw error;
+      }
+      return;
+    }
   } catch(e) { toast('Erreur Google: '+e.message,'err'); }
 }
 

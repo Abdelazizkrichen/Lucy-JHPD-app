@@ -9,8 +9,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
-:root{--bg:#09090d;--s1:#111118;--s2:#16161f;--b:#1f1f2e;--a:#6c63ff;--ag:rgba(108,99,255,.12);--g:#00d68f;--r:#ff4f6d;--y:#ffb800;--t:#e2e2f0;--m:#55556a;--shadow:none}
-[data-theme="light"]{--bg:#f4f4f8;--s1:#ffffff;--s2:#f0f0f5;--b:#d8d8e8;--a:#5a52e8;--ag:rgba(90,82,232,.1);--g:#00a86b;--r:#e83550;--y:#d4920a;--t:#1a1a2e;--m:#888899;--shadow:0 1px 3px rgba(0,0,0,.08)}
+:root{--bg:#f4f4f8;--s1:#ffffff;--s2:#f0f0f5;--b:#d8d8e8;--a:#5a52e8;--ag:rgba(90,82,232,.1);--g:#00a86b;--r:#e83550;--y:#d4920a;--t:#1a1a2e;--m:#888899;--shadow:0 1px 3px rgba(0,0,0,.08)}
+[data-theme="dark"]{--bg:#09090d;--s1:#111118;--s2:#16161f;--b:#1f1f2e;--a:#6c63ff;--ag:rgba(108,99,255,.12);--g:#00d68f;--r:#ff4f6d;--y:#ffb800;--t:#e2e2f0;--m:#55556a;--shadow:none}
 *{margin:0;padding:0;box-sizing:border-box}
 html{height:100%;font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--t)}
 body{height:100%;display:flex;flex-direction:column;overflow:hidden}
@@ -201,12 +201,12 @@ input[type=file]{display:none}
 /* THEME TOGGLE */
 .theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--b);background:var(--s2);color:var(--m);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;flex-shrink:0}
 .theme-btn:hover{border-color:var(--a);color:var(--a)}
-[data-theme="light"] .jcard{box-shadow:var(--shadow)}
-[data-theme="light"] .rcard{box-shadow:var(--shadow)}
-[data-theme="light"] .stat-card{box-shadow:var(--shadow)}
-[data-theme="light"] .stat-section{box-shadow:var(--shadow)}
-[data-theme="light"] header{box-shadow:0 1px 4px rgba(0,0,0,.06)}
-[data-theme="light"] .tabs{box-shadow:0 1px 4px rgba(0,0,0,.04)}
+[data-theme="dark"] .jcard{box-shadow:var(--shadow)}
+[data-theme="dark"] .rcard{box-shadow:var(--shadow)}
+[data-theme="dark"] .stat-card{box-shadow:var(--shadow)}
+[data-theme="dark"] .stat-section{box-shadow:var(--shadow)}
+[data-theme="dark"] header{box-shadow:0 1px 4px rgba(0,0,0,.06)}
+[data-theme="dark"] .tabs{box-shadow:0 1px 4px rgba(0,0,0,.04)}
 /* SOURCE COLORS */
 .jsrc.wttj{border-color:rgba(255,79,109,.3);color:#ff6b8a}
 .jsrc.apec{border-color:rgba(0,214,143,.3);color:var(--g)}
@@ -592,7 +592,7 @@ function showUserMenu() {
 async function loadUserData() {
   if (!sbClient || !currentUser) return;
   try {
-    const {data:p} = await sbClient.from('profiles').select('*').eq('id',currentUser.id).single();
+    const {data:p} = await sbClient.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
     if (p) {
       // Supabase → local (seulement si non vide)
       if (p.groq_key)   { gkey=p.groq_key;       localStorage.setItem('lj_k',gkey); }
@@ -640,7 +640,11 @@ async function init() {
 }
 
 function continueInit() {
+  // Toujours relire localStorage au dernier moment
+  if (!gkey)  gkey  = localStorage.getItem('lj_k')  || '';
+  if (!cvTxt) cvTxt = localStorage.getItem('lj_cv') || '';
   if (!gkey || !cvTxt) { openSetup(); return; }
+  document.getElementById('ov').classList.add('hide');
   updCvStatus(); render(); updBadge(); renderReady();
   if (jobs.length === 0) scrape(); else autoScore();
 }
@@ -1144,21 +1148,26 @@ function toast(msg,type){
 }
 
 function toggleTheme() {
-  const html = document.documentElement;
-  const isDark = html.getAttribute('data-theme') !== 'light';
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const newTheme = isDark ? 'light' : 'dark';
-  html.setAttribute('data-theme', newTheme === 'dark' ? '' : 'light');
-  document.getElementById('themeBtn').textContent = newTheme === 'light' ? '☀️' : '🌙';
+  if (newTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeBtn').textContent = '🌙';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('themeBtn').textContent = '☀️';
+  }
   localStorage.setItem('lj_theme', newTheme);
 }
 
 function applyTheme() {
-  const saved = localStorage.getItem('lj_theme');
-  // Auto-detect: mobile souvent en extérieur → light par défaut si pas de préférence
-  const preferLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-  const theme = saved || (preferLight ? 'light' : 'dark');
-  if (theme === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light');
+  const saved = localStorage.getItem('lj_theme') || 'light'; // light par défaut
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = '🌙';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
     const btn = document.getElementById('themeBtn');
     if (btn) btn.textContent = '☀️';
   }

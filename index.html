@@ -447,10 +447,7 @@ input[type=file]{display:none}
 <!-- SETUP MODAL -->
 <div class="ov hide" id="ov">
   <div class="modal">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <h2 style="margin:0">⚙ Configuration</h2>
-      <span id="closeCfg" onclick="forceCloseSetup()" style="font-size:20px;cursor:pointer;color:var(--m);line-height:1;padding:4px 8px;border-radius:6px" onmouseover="this.style.color='var(--t)'" onmouseout="this.style.color='var(--m)'">✕</span>
-    </div>
+    <h2>⚙ Configuration</h2>
     <p class="sub">Tout reste dans votre navigateur. Aucune donnée envoyée à nos serveurs.</p>
 
     <!-- GROQ -->
@@ -478,23 +475,54 @@ input[type=file]{display:none}
     <div class="pbar" id="pbar"><div class="pbar-inner" id="pbari" style="width:0%"></div></div>
 
     <!-- FRANCE TRAVAIL -->
-    <hr class="msep">
-    <div class="msec">5 — Gmail (envoi email — bêta) <span style="font-weight:400;text-transform:none;color:var(--y)">⚠ Test : envoi vers vous-même uniquement</span></div>
-    <div class="mf">
-      <label>Votre adresse Gmail</label>
-      <input type="email" id="mgm" placeholder="vous@gmail.com">
-    </div>
-    <div class="mf">
-      <label>Gmail App Password <a href="https://myaccount.google.com/apppasswords" target="_blank">→ Générer ici</a></label>
-      <input type="password" id="mgp" placeholder="xxxx xxxx xxxx xxxx">
-      <div class="guide">① Activez la validation en 2 étapes sur votre compte Google → ② Allez sur myaccount.google.com/apppasswords → ③ "Autre" → nommez "Lucy" → ④ Copiez le mot de passe à 16 caractères</div>
-    </div>
+
 
     <div class="mrow">
       <button class="mbtn p" id="msave" onclick="saveSetup()" disabled>Enregistrer →</button>
       <button class="mbtn s" onclick="forceCloseSetup()">Annuler</button>
     </div></div>
     </div>
+
+<!-- GMAIL CONFIG MODAL -->
+<div class="ov hide" id="gmailov">
+  <div class="modal" style="max-width:440px">
+    <h2>✉ Configurer l'envoi email</h2>
+    <p class="sub">Pour envoyer vos candidatures par email directement depuis Lucy.</p>
+    <div style="background:rgba(255,184,0,.08);border:1px solid rgba(255,184,0,.25);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--y);margin-bottom:14px;line-height:1.8">
+      ⚠ <strong>Prérequis :</strong> La <strong>validation en 2 étapes</strong> doit être activée sur votre compte Google pour générer un App Password.
+    </div>
+    <div class="mf">
+      <label>Votre adresse Gmail</label>
+      <input type="email" id="gcfg_email" placeholder="vous@gmail.com">
+    </div>
+    <div class="mf">
+      <label>App Password Google <a href="https://myaccount.google.com/apppasswords" target="_blank">→ Générer ici</a></label>
+      <input type="password" id="gcfg_pass" placeholder="xxxx xxxx xxxx xxxx">
+      <div class="guide">
+        ① <a href="https://myaccount.google.com/security" target="_blank" style="color:var(--a)">myaccount.google.com/security</a> → Activer "Validation en 2 étapes"<br>
+        ② <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--a)">myaccount.google.com/apppasswords</a><br>
+        ③ Nom : "Lucy" → Créer → Copier les 16 caractères
+      </div>
+    </div>
+    <div class="mrow">
+      <button class="mbtn p" onclick="saveGmailConfig()">Enregistrer →</button>
+      <button class="mbtn s" onclick="document.getElementById('gmailov').classList.add('hide')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGOUT MODAL -->
+<div class="ov hide" id="logoutov">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <div style="font-size:28px;margin-bottom:12px">👋</div>
+    <h2 style="margin-bottom:8px">Se déconnecter ?</h2>
+    <p class="sub" id="logoutEmail" style="margin-bottom:0"></p>
+    <div class="mrow">
+      <button class="mbtn p" onclick="doLogout()" style="background:var(--r)">Déconnecter</button>
+      <button class="mbtn s" onclick="document.getElementById('logoutov').classList.add('hide')">Annuler</button>
+    </div>
+  </div>
+</div>
 
 <!-- SEND MODAL -->
 <div class="ov hide" id="sendov">
@@ -657,7 +685,12 @@ async function signInGoogle() {
 
 function showUserMenu() {
   if (!currentUser) return;
-  if (confirm('Connecté : '+currentUser.email+'\n\nSe déconnecter ?')) sbClient?.auth.signOut();
+  document.getElementById('logoutEmail').textContent = currentUser.email;
+  document.getElementById('logoutov').classList.remove('hide');
+}
+function doLogout() {
+  document.getElementById('logoutov').classList.add('hide');
+  sbClient?.auth.signOut();
 }
 
 async function loadUserData() {
@@ -733,8 +766,6 @@ function openSetup() {
   // Ne jamais ouvrir config si login pas encore fait
   if (!document.getElementById('loginov').classList.contains('hide')) return;
   document.getElementById('mkey').value = gkey;
-  document.getElementById('mgm').value  = gmailUser;
-  document.getElementById('mgp').value  = gmailPass;
   if (cvTxt) {
     document.getElementById('cvdh').textContent = '✓ CV chargé';
     document.getElementById('cvds').textContent = cvTxt.length + ' caractères';
@@ -757,8 +788,6 @@ function saveSetup() {
   gmailUser = document.getElementById('mgm').value.trim();
   gmailPass = document.getElementById('mgp').value.trim();
   localStorage.setItem('lj_k',gkey);
-  localStorage.setItem('lj_gm',gmailUser);
-  localStorage.setItem('lj_gp',gmailPass);
   document.getElementById('ov').classList.add('hide');
   toast('Configuration sauvegardée ✓','ok');
   syncProfile();
@@ -1228,12 +1257,38 @@ function getPDFb64(r){ return buildPDFDoc(r).output('datauristring').split(',')[
 
 // ── SEND EMAIL
 function openSendModal(id){
-  if(!gmailUser||!gmailPass){toast('Configurez Gmail dans ⚙ Config','err');openSetup();return;}
-  if(!cvB64){toast('CV original manquant — re-uploadez','err');return;}
+  if(!cvB64){toast('CV original manquant — re-uploadez votre CV','err');return;}
+  if(!gmailUser||!gmailPass){
+    // Pas de config Gmail → afficher le modal de config Gmail
+    currentSendId=id; // mémoriser pour après config
+    document.getElementById('gmailov').classList.remove('hide');
+    return;
+  }
   currentSendId=id; const r=results.find(r=>r.id===id); if(!r) return;
   document.getElementById('sendtitle').textContent=r.jobTitle+' — '+r.company;
   document.getElementById('sendto').value=gmailUser;
   document.getElementById('sendov').classList.remove('hide');
+}
+
+function saveGmailConfig(){
+  const em=document.getElementById('gcfg_email').value.trim();
+  const pw=document.getElementById('gcfg_pass').value.trim();
+  if(!em||!pw){toast('Email et App Password requis','err');return;}
+  gmailUser=em; gmailPass=pw;
+  localStorage.setItem('lj_gm',gmailUser);
+  localStorage.setItem('lj_gp',gmailPass);
+  syncProfile();
+  document.getElementById('gmailov').classList.add('hide');
+  toast('Email configuré ✓','ok');
+  // Ouvrir le modal d'envoi si une candidature était en attente
+  if(currentSendId){
+    const r=results.find(r=>r.id===currentSendId);
+    if(r){
+      document.getElementById('sendtitle').textContent=r.jobTitle+' — '+r.company;
+      document.getElementById('sendto').value=gmailUser;
+      document.getElementById('sendov').classList.remove('hide');
+    }
+  }
 }
 function closeSendModal(){ document.getElementById('sendov').classList.add('hide'); currentSendId=null; }
 

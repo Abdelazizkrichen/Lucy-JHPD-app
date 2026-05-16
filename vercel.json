@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/jobs.py":        { "runtime": "python3.9" },
+    "api/send_email.py":  { "runtime": "python3.9" },
+    "api/config.py":      { "runtime": "python3.9" }
+  },
   "rewrites": [
     { "source": "/api/jobs",       "destination": "/api/jobs"       },
     { "source": "/api/send-email", "destination": "/api/send_email" },

@@ -6,6 +6,7 @@
 <title>Lucy — Job Hunter</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 :root{--bg:#09090d;--s1:#111118;--s2:#16161f;--b:#1f1f2e;--a:#6c63ff;--ag:rgba(108,99,255,.12);--g:#00d68f;--r:#ff4f6d;--y:#ffb800;--t:#e2e2f0;--m:#55556a}
@@ -196,6 +197,66 @@ header{display:flex;align-items:center;gap:12px;padding:0 20px;height:48px;borde
 .sp.on{display:inline-block}
 @keyframes spi{to{transform:rotate(360deg)}}
 input[type=file]{display:none}
+/* SOURCE COLORS */
+.jsrc.wttj{border-color:rgba(255,79,109,.3);color:#ff6b8a}
+.jsrc.apec{border-color:rgba(0,214,143,.3);color:var(--g)}
+.jsrc.hw{border-color:rgba(255,184,0,.3);color:var(--y)}
+/* STATUS CHIPS */
+.status-row{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0 6px}
+.stchip{padding:3px 9px;border-radius:12px;font-size:10px;cursor:pointer;border:1px solid var(--b);background:var(--s2);color:var(--m);font-family:'Space Mono',monospace;transition:all .15s}
+.stchip:hover{border-color:var(--a);color:var(--a)}
+.stchip.on-sent{border-color:var(--a);color:var(--a);background:var(--ag)}
+.stchip.on-replied{border-color:var(--y);color:var(--y);background:rgba(255,184,0,.08)}
+.stchip.on-interview{border-color:#00c4ff;color:#00c4ff;background:rgba(0,196,255,.08)}
+.stchip.on-offer{border-color:var(--g);color:var(--g);background:rgba(0,214,143,.08)}
+.stchip.on-rejected{border-color:var(--r);color:var(--r);background:rgba(255,79,109,.08)}
+.sbadge{font-size:9px;padding:2px 7px;border-radius:8px;font-family:'Space Mono',monospace;flex-shrink:0}
+.sb-generated{background:var(--s2);color:var(--m);border:1px solid var(--b)}
+.sb-sent{background:var(--ag);color:var(--a);border:1px solid rgba(108,99,255,.3)}
+.sb-replied{background:rgba(255,184,0,.1);color:var(--y);border:1px solid rgba(255,184,0,.3)}
+.sb-interview{background:rgba(0,196,255,.1);color:#00c4ff;border:1px solid rgba(0,196,255,.3)}
+.sb-offer{background:rgba(0,214,143,.1);color:var(--g);border:1px solid rgba(0,214,143,.3)}
+.sb-rejected{background:rgba(255,79,109,.08);color:var(--r);border:1px solid rgba(255,79,109,.3)}
+/* ARCHIVE + RESET BTNS */
+.rbtn.arch{background:rgba(255,184,0,.1);color:var(--y);border:1px solid rgba(255,184,0,.25)}
+.rbtn.arch:hover{background:rgba(255,184,0,.2)}
+.rbtn.unarch{background:var(--s2);border:1px solid var(--b);color:var(--m);font-size:10px}
+.rbtn.unarch:hover{border-color:var(--a);color:var(--a)}
+.resetbtn{padding:6px 10px;border-radius:6px;border:1px solid rgba(255,79,109,.3);background:rgba(255,79,109,.06);color:var(--r);font-size:11px;cursor:pointer;font-family:'Space Mono',monospace;transition:all .15s}
+.resetbtn:hover{background:rgba(255,79,109,.12)}
+/* LOGIN */
+.user-dot{width:26px;height:26px;border-radius:50%;background:var(--a);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0}
+/* STATS */
+.stats-scroll{flex:1;overflow-y:auto;padding:14px}
+.stats-scroll::-webkit-scrollbar{width:4px}
+.stats-scroll::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-bottom:16px}
+.stat-card{background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:14px;text-align:center}
+.stat-card .sn{font-size:26px;font-weight:700;font-family:'Space Mono',monospace;line-height:1}
+.stat-card .sl{font-size:10px;color:var(--m);margin-top:4px}
+.stat-section{background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:14px;margin-bottom:10px}
+.stat-section h3{font-size:11px;font-family:'Space Mono',monospace;color:var(--m);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em}
+.pipeline{display:flex;align-items:stretch;border-radius:8px;overflow:hidden;border:1px solid var(--b)}
+.pipe-step{flex:1;padding:10px 6px;text-align:center;border-right:1px solid var(--b)}
+.pipe-step:last-child{border-right:none}
+.pipe-step .pn{font-size:18px;font-weight:700;font-family:'Space Mono',monospace;line-height:1}
+.pipe-step .pl{font-size:9px;color:var(--m);margin-top:3px;white-space:nowrap}
+.pipe-step.p-sent{background:var(--ag)}.pipe-step.p-replied{background:rgba(255,184,0,.06)}.pipe-step.p-interview{background:rgba(0,196,255,.06)}.pipe-step.p-offer{background:rgba(0,214,143,.06)}
+.src-row{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.src-name{font-size:11px;font-family:'Space Mono',monospace;width:65px;flex-shrink:0}
+.src-bar{flex:1;height:7px;background:var(--s2);border-radius:4px;overflow:hidden}
+.src-fill{height:100%;border-radius:4px;transition:width .5s}
+.src-fill.wttj{background:#ff6b8a}.src-fill.apec{background:var(--g)}.src-fill.hw{background:var(--y)}
+.src-count{font-size:11px;color:var(--m);width:22px;text-align:right;font-family:'Space Mono',monospace}
+.score-dist{display:flex;align-items:flex-end;gap:4px;height:44px}
+.sc-bar{flex:1;background:var(--a);border-radius:3px 3px 0 0;opacity:.7;min-height:2px;transition:height .4s}
+.sc-bar-labels{display:flex;gap:4px;margin-top:4px}
+.sc-bar-labels span{flex:1;font-size:9px;color:var(--m);text-align:center;font-family:'Space Mono',monospace}
+/* ARCHIVES VIEW */
+.list-scroll{flex:1;overflow-y:auto;padding:13px}
+.list-scroll::-webkit-scrollbar{width:4px}
+.list-scroll::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
+
 
 /* BETA BANNER */
 .beta-banner{background:rgba(255,184,0,.07);border-bottom:1px solid rgba(255,184,0,.2);padding:7px 20px;font-size:11px;color:var(--y);display:flex;align-items:center;gap:8px;flex-shrink:0}
@@ -212,6 +273,7 @@ input[type=file]{display:none}
   <div class="beta" onclick="showBetaInfo()">BETA</div>
   <div class="hsp"></div>
   <div class="cv-ok"><div class="d" id="cvDot"></div><span id="cvTxt">CV non chargé</span></div>
+  <div class="user-dot" id="userDot" style="display:none" onclick="showUserMenu()">?</div>
   <button class="hbtn" onclick="openSetup()">⚙ Config</button>
 </header>
 
@@ -228,6 +290,8 @@ input[type=file]{display:none}
     <div class="tab" id="tabReady" onclick="showTab('ready')">
       ✦ Prêtes <span class="tbadge" id="tbadge">0</span>
     </div>
+    <div class="tab" id="tabArch"  onclick="showTab('arch')">📦 Archives</div>
+    <div class="tab" id="tabStats" onclick="showTab('stats')">📊 Stats</div>
     <div class="tsp"></div>
   </div>
 
@@ -256,7 +320,56 @@ input[type=file]{display:none}
   </div>
 
   <div class="view" id="viewReady">
-    <div class="ready-scroll" id="readyList"></div>
+    <div class="list-scroll" id="readyList"></div>
+  </div>
+
+  <!-- ARCHIVES -->
+  <div class="view" id="viewArch">
+    <div class="list-scroll" id="archList"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="view" id="viewStats">
+    <div class="stats-scroll" id="statsContent"></div>
+  </div>
+</div>
+
+<!-- RESET CONFIRM -->
+<div class="ov hide" id="resetov">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <div style="font-size:28px;margin-bottom:12px">🗑</div>
+    <h2 style="margin-bottom:8px">Vider les offres ?</h2>
+    <p class="sub">Les offres scrappées seront supprimées. Vos candidatures générées sont conservées.</p>
+    <div class="mrow">
+      <button class="mbtn p" onclick="doReset()" style="background:var(--r)">Vider</button>
+      <button class="mbtn s" onclick="document.getElementById('resetov').classList.add('hide')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="ov hide" id="loginov">
+  <div class="modal" style="max-width:370px">
+    <div id="loginForm" style="text-align:center">
+      <div style="font-size:36px;margin-bottom:12px">✦</div>
+      <h2 style="margin-bottom:6px">Lucy Job Hunter</h2>
+      <p class="sub">Entrez votre email pour vous connecter et synchroniser vos données sur tous vos appareils.</p>
+      <div class="mf" style="text-align:left">
+        <label>Votre email</label>
+        <input type="email" id="loginEmail" placeholder="vous@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()">
+      </div>
+      <div class="mrow">
+        <button class="mbtn p" id="loginBtn" onclick="sendMagicLink()" style="display:flex;align-items:center;justify-content:center;gap:8px">
+          <span id="loginSp" class="sp"></span>Recevoir le lien →
+        </button>
+      </div>
+      <p style="font-size:10px;color:var(--m);margin-top:10px">Aucun mot de passe. Lien valable 1 heure.</p>
+    </div>
+    <div id="loginConfirm" style="text-align:center;display:none">
+      <div style="font-size:32px;margin-bottom:10px">📨</div>
+      <h2 style="margin-bottom:8px">Lien envoyé !</h2>
+      <p class="sub">Vérifiez votre boîte mail et cliquez sur le lien pour vous connecter. Vous pouvez fermer cette fenêtre.</p>
+    </div>
   </div>
 </div>
 
@@ -290,33 +403,6 @@ input[type=file]{display:none}
     <div class="pbar" id="pbar"><div class="pbar-inner" id="pbari" style="width:0%"></div></div>
 
     <!-- FRANCE TRAVAIL -->
-    <hr class="msep">
-    <div class="msec">3 — France Travail API <span style="font-weight:400;text-transform:none">(optionnel)</span></div>
-    <div class="mf">
-      <label>App ID France Travail <a href="https://francetravail.io/data/api/offres-emploi" target="_blank">→ S'inscrire</a></label>
-      <input type="text" id="mftid" placeholder="PAR_votrenom_xxxx...">
-      <div class="guide">① Créez un compte sur francetravail.io/data → ② "Mes applications" → ③ Créez une app et abonnez-vous à "Offres d'emploi v2" → ④ Copiez l'App ID</div>
-    </div>
-    <div class="mf">
-      <label>Clé secrète France Travail</label>
-      <input type="password" id="mftsec" placeholder="Clé secrète...">
-      <div class="guide">Dans la même application France Travail, copiez la "Clé secrète"</div>
-    </div>
-
-    <!-- ADZUNA -->
-    <hr class="msep">
-    <div class="msec">4 — Adzuna API <span style="font-weight:400;text-transform:none">(optionnel)</span></div>
-    <div class="mf">
-      <label>Adzuna App ID <a href="https://developer.adzuna.com/signup" target="_blank">→ S'inscrire gratuitement</a></label>
-      <input type="text" id="mazid" placeholder="xxxxxxxx">
-      <div class="guide">① Créez un compte sur developer.adzuna.com → ② Dashboard → ③ "API Access Details" → ④ Copiez l'App ID et la Key</div>
-    </div>
-    <div class="mf">
-      <label>Adzuna App Key</label>
-      <input type="password" id="mazkey" placeholder="Clé Adzuna...">
-    </div>
-
-    <!-- GMAIL -->
     <hr class="msep">
     <div class="msec">5 — Gmail (envoi email — bêta) <span style="font-weight:400;text-transform:none;color:var(--y)">⚠ Test : envoi vers vous-même uniquement</span></div>
     <div class="mf">
@@ -382,30 +468,134 @@ input[type=file]{display:none}
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 // ── STATE
-let gkey      = localStorage.getItem('lj_k')    || '';
-let gmailUser = localStorage.getItem('lj_gm')   || '';
-let gmailPass = localStorage.getItem('lj_gp')   || '';
-let ftAppId   = localStorage.getItem('lj_ftid') || '';
-let ftSecret  = localStorage.getItem('lj_ftsec')|| '';
-let azAppId   = localStorage.getItem('lj_azid') || '';
-let azKey     = localStorage.getItem('lj_azkey')|| '';
-let cvTxt  = localStorage.getItem('lj_cv') || '';
-let cvB64  = localStorage.getItem('lj_b')  || '';
+let gkey      = localStorage.getItem('lj_k')  || '';
+let gmailUser = localStorage.getItem('lj_gm') || '';
+let gmailPass = localStorage.getItem('lj_gp') || '';
+let cvTxt     = localStorage.getItem('lj_cv') || '';
+let cvB64     = localStorage.getItem('lj_b')  || '';
 let userProfile = JSON.parse(localStorage.getItem('lj_profile') || 'null');
-let jobs    = JSON.parse(localStorage.getItem('lj_j') || '[]');
-let results = JSON.parse(localStorage.getItem('lj_r') || '[]');
+let jobs    = JSON.parse(localStorage.getItem('lj_j')    || '[]');
+let results = JSON.parse(localStorage.getItem('lj_r')    || '[]');
+let statuses= JSON.parse(localStorage.getItem('lj_st')   || '{}');
+let archived= new Set(JSON.parse(localStorage.getItem('lj_arch') || '[]'));
 let sel = new Set(), doneSet = new Set(results.map(r=>r.id)), genSet = new Set();
 let filter = 'all', activeTab = 'jobs', currentSendId = null;
+let sbClient = null, currentUser = null;
 
-// ── INIT
-function init() {
-  if (!gkey || !cvTxt) { openSetup(); return; }
-  document.getElementById('ov').classList.add('hide');
-  updCvStatus(); render(); updBadge(); renderReady();
-  if (jobs.length === 0) scrape();
-  else autoScore();
+const STATUS_LABELS = {generated:'Générée',sent:'Envoyée',replied:'Réponse',interview:'Entretien',offer:'Offre',rejected:'Refus'};
+
+// ── SUPABASE
+async function initSupabase() {
+  try {
+    const cfg = await fetch('/api/config').then(r=>r.json());
+    if (!cfg.supabase_url || !cfg.supabase_anon_key) {
+      // Supabase non configuré → bloquer l'accès
+      document.getElementById('loginov').classList.remove('hide');
+      document.getElementById('loginForm').innerHTML = `
+        <div style="text-align:center">
+          <div style="font-size:36px;margin-bottom:12px">⚙</div>
+          <h2 style="margin-bottom:8px;color:var(--r)">Configuration requise</h2>
+          <p class="sub">Les variables d'environnement Supabase ne sont pas définies sur Vercel.<br>Ajoutez <strong style="color:var(--t)">SUPABASE_URL</strong> et <strong style="color:var(--t)">SUPABASE_ANON_KEY</strong> dans les settings Vercel, puis redéployez.</p>
+          <div style="background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:12px;font-size:11px;color:var(--m);text-align:left;line-height:1.9">
+            1. <a href="https://supabase.com" target="_blank" style="color:var(--a)">supabase.com</a> → Créer un projet gratuit<br>
+            2. Exécuter le SQL de création des tables<br>
+            3. Vercel → Settings → Environment Variables<br>
+            4. Ajouter SUPABASE_URL + SUPABASE_ANON_KEY → Redéployer
+          </div>
+        </div>`;
+      return false;
+    }
+    const {createClient} = window.supabase;
+    sbClient = createClient(cfg.supabase_url, cfg.supabase_anon_key);
+    sbClient.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        currentUser = session.user;
+        const dot = document.getElementById('userDot');
+        dot.textContent = (session.user.email||'?')[0].toUpperCase();
+        dot.style.display = 'flex';
+        document.getElementById('loginov').classList.add('hide');
+        await loadUserData();
+        continueInit();
+      } else if (event === 'SIGNED_OUT') {
+        currentUser = null;
+        document.getElementById('userDot').style.display = 'none';
+        document.getElementById('loginov').classList.remove('hide');
+      }
+    });
+    const {data:{session}} = await sbClient.auth.getSession();
+    if (session) { currentUser = session.user; return true; }
+    document.getElementById('loginov').classList.remove('hide');
+    return false;
+  } catch(e) { console.warn('Supabase:', e); return false; }
 }
 
+async function sendMagicLink() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) { toast('Email requis','err'); return; }
+  const btn=document.getElementById('loginBtn'), sp=document.getElementById('loginSp');
+  btn.disabled=true; sp.classList.add('on');
+  try {
+    const {error} = await sbClient.auth.signInWithOtp({email, options:{emailRedirectTo:window.location.href}});
+    if (error) throw error;
+    document.getElementById('loginForm').style.display='none';
+    document.getElementById('loginConfirm').style.display='block';
+  } catch(e) { toast('Erreur: '+e.message,'err'); btn.disabled=false; sp.classList.remove('on'); }
+}
+
+function skipLogin() { /* Auth obligatoire */ }
+
+function showUserMenu() {
+  if (!currentUser) return;
+  if (confirm('Connecté : '+currentUser.email+'\n\nSe déconnecter ?')) sbClient?.auth.signOut();
+}
+
+async function loadUserData() {
+  if (!sbClient || !currentUser) return;
+  try {
+    const {data:p} = await sbClient.from('profiles').select('*').eq('id',currentUser.id).single();
+    if (p) {
+      if (p.groq_key)   { gkey=p.groq_key;       localStorage.setItem('lj_k',gkey); }
+      if (p.gmail_user) { gmailUser=p.gmail_user; localStorage.setItem('lj_gm',gmailUser); }
+      if (p.gmail_pass) { gmailPass=p.gmail_pass; localStorage.setItem('lj_gp',gmailPass); }
+      if (p.cv_text)    { cvTxt=p.cv_text;        localStorage.setItem('lj_cv',cvTxt); }
+    }
+    const {data:rr} = await sbClient.from('results').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+    if (rr && rr.length) {
+      results = rr.map(r=>({id:r.id,jobTitle:r.job_title,company:r.company,jobLink:r.job_link,subject:r.subject,letter:r.letter,profil:r.profil,comp:r.comp,exp:r.exp,score:r.score,ts:new Date(r.created_at).getTime()}));
+      rr.forEach(r=>{ if(r.status) statuses[r.id]=r.status; if(r.archived) archived.add(r.id); });
+      doneSet = new Set(results.map(r=>r.id));
+      localStorage.setItem('lj_r',JSON.stringify(results));
+      localStorage.setItem('lj_st',JSON.stringify(statuses));
+      localStorage.setItem('lj_arch',JSON.stringify([...archived]));
+    }
+    toast('Données chargées ✓','ok');
+  } catch(e) { console.warn('loadUserData:',e); }
+}
+
+async function syncProfile() {
+  if (!sbClient||!currentUser) return;
+  try { await sbClient.from('profiles').upsert({id:currentUser.id,groq_key:gkey,gmail_user:gmailUser,gmail_pass:gmailPass,cv_text:cvTxt,updated_at:new Date().toISOString()}); } catch {}
+}
+
+async function syncResult(r) {
+  if (!sbClient||!currentUser) return;
+  try { await sbClient.from('results').upsert({id:r.id,user_id:currentUser.id,job_title:r.jobTitle,company:r.company,job_link:r.jobLink,subject:r.subject,letter:r.letter,profil:r.profil,comp:r.comp,exp:r.exp,score:r.score,status:statuses[r.id]||'generated',archived:archived.has(r.id),updated_at:new Date().toISOString()}); } catch {}
+}
+
+// ── INIT
+async function init() {
+  const hasSB = await initSupabase();
+  if (hasSB && !currentUser) return;
+  continueInit();
+}
+
+function continueInit() {
+  if (!gkey || !cvTxt) { openSetup(); return; }
+  updCvStatus(); render(); updBadge(); renderReady();
+  if (jobs.length === 0) scrape(); else autoScore();
+}
+
+// ── CV STATUS
 function updCvStatus() {
   const ok = !!(gkey && cvTxt);
   document.getElementById('cvDot').classList.toggle('ok', ok);
@@ -414,13 +604,9 @@ function updCvStatus() {
 
 // ── SETUP
 function openSetup() {
-  document.getElementById('mkey').value   = gkey;
-  document.getElementById('mgm').value    = gmailUser;
-  document.getElementById('mgp').value    = gmailPass;
-  document.getElementById('mftid').value  = ftAppId;
-  document.getElementById('mftsec').value = ftSecret;
-  document.getElementById('mazid').value  = azAppId;
-  document.getElementById('mazkey').value = azKey;
+  document.getElementById('mkey').value = gkey;
+  document.getElementById('mgm').value  = gmailUser;
+  document.getElementById('mgp').value  = gmailPass;
   if (cvTxt) {
     document.getElementById('cvdh').textContent = '✓ CV chargé';
     document.getElementById('cvds').textContent = cvTxt.length + ' caractères';
@@ -430,9 +616,7 @@ function openSetup() {
   chkModal();
 }
 
-function closeSetup() {
-  if (gkey && cvTxt) document.getElementById('ov').classList.add('hide');
-}
+function closeSetup() { if (gkey && cvTxt) document.getElementById('ov').classList.add('hide'); }
 
 function chkModal() {
   const k = document.getElementById('mkey').value.trim();
@@ -443,65 +627,45 @@ function saveSetup() {
   gkey      = document.getElementById('mkey').value.trim();
   gmailUser = document.getElementById('mgm').value.trim();
   gmailPass = document.getElementById('mgp').value.trim();
-  ftAppId   = document.getElementById('mftid').value.trim();
-  ftSecret  = document.getElementById('mftsec').value.trim();
-  azAppId   = document.getElementById('mazid').value.trim();
-  azKey     = document.getElementById('mazkey').value.trim();
-  localStorage.setItem('lj_k',     gkey);
-  localStorage.setItem('lj_gm',    gmailUser);
-  localStorage.setItem('lj_gp',    gmailPass);
-  localStorage.setItem('lj_ftid',  ftAppId);
-  localStorage.setItem('lj_ftsec', ftSecret);
-  localStorage.setItem('lj_azid',  azAppId);
-  localStorage.setItem('lj_azkey', azKey);
+  localStorage.setItem('lj_k',gkey); localStorage.setItem('lj_gm',gmailUser); localStorage.setItem('lj_gp',gmailPass);
   document.getElementById('ov').classList.add('hide');
   updCvStatus(); render(); updBadge(); renderReady();
-  toast('Configuration sauvegardée', 'ok');
+  toast('Configuration sauvegardée','ok');
+  syncProfile();
   if (jobs.length === 0) scrape();
   if (gkey && cvTxt && !userProfile) extractProfile();
 }
 
-function showBetaInfo() {
-  document.getElementById('betaov').classList.remove('hide');
-}
+function showBetaInfo() { document.getElementById('betaov').classList.remove('hide'); }
 
-// ── CV UPLOAD
+// ── CV
 function dropCv(e) {
-  e.preventDefault();
-  document.getElementById('cvdrop').classList.remove('drag');
-  const f = e.dataTransfer.files[0];
-  if (f && f.type === 'application/pdf') extractPdf(f);
+  e.preventDefault(); document.getElementById('cvdrop').classList.remove('drag');
+  const f=e.dataTransfer.files[0]; if(f&&f.type==='application/pdf') extractPdf(f);
 }
-function loadCvFile(e) { const f = e.target.files[0]; if(f) extractPdf(f); }
+function loadCvFile(e) { const f=e.target.files[0]; if(f) extractPdf(f); }
 
 async function extractPdf(file) {
-  document.getElementById('cvds').textContent = 'Extraction en cours...';
+  document.getElementById('cvds').textContent='Extraction...';
   document.getElementById('pbar').classList.add('show');
   try {
-    const ab  = await file.arrayBuffer();
-    cvB64 = arrayBufferToBase64(ab);
-    localStorage.setItem('lj_b', cvB64);
-    const pdf = await pdfjsLib.getDocument({data: ab}).promise;
-    let txt = ''; const total = pdf.numPages;
-    for (let i=1; i<=total; i++) {
-      const pg = await pdf.getPage(i);
-      const c  = await pg.getTextContent();
-      txt += c.items.map(s=>s.str).join(' ') + '\n';
-      document.getElementById('pbari').style.width = (i/total*100)+'%';
+    const ab=await file.arrayBuffer();
+    cvB64=arrayBufferToBase64(ab); localStorage.setItem('lj_b',cvB64);
+    const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+    let txt=''; const total=pdf.numPages;
+    for(let i=1;i<=total;i++){
+      const pg=await pdf.getPage(i); const c=await pg.getTextContent();
+      txt+=c.items.map(s=>s.str).join(' ')+'\n';
+      document.getElementById('pbari').style.width=(i/total*100)+'%';
     }
-    cvTxt = txt.trim();
-    localStorage.setItem('lj_cv', cvTxt);
-    document.getElementById('cvdh').textContent = '✓ ' + file.name;
-    document.getElementById('cvds').textContent = cvTxt.length + ' caractères extraits';
+    cvTxt=txt.trim(); localStorage.setItem('lj_cv',cvTxt);
+    document.getElementById('cvdh').textContent='✓ '+file.name;
+    document.getElementById('cvds').textContent=cvTxt.length+' caractères extraits';
     document.getElementById('cvdrop').classList.add('ok');
     document.getElementById('pbar').classList.remove('show');
-    chkModal();
-    toast('CV extrait (' + cvTxt.length + ' car.)', 'ok');
-    if (gkey && !userProfile) extractProfile();
-  } catch(e) {
-    document.getElementById('cvds').textContent = 'Erreur: ' + e.message;
-    toast('Erreur extraction PDF', 'err');
-  }
+    chkModal(); toast('CV extrait ('+cvTxt.length+' car.)','ok');
+    if(gkey&&!userProfile) extractProfile();
+  } catch(e) { document.getElementById('cvds').textContent='Erreur: '+e.message; toast('Erreur extraction PDF','err'); }
 }
 
 function arrayBufferToBase64(buf) {
@@ -510,389 +674,416 @@ function arrayBufferToBase64(buf) {
   return btoa(bin);
 }
 
-// ── EXTRACT PROFILE depuis CV
 async function extractProfile() {
-  if (!gkey || !cvTxt) return;
+  if(!gkey||!cvTxt) return;
   try {
-    const raw = await groq([{role:'user', content:
-      `Analyse ce CV et extrais les informations personnelles. Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, sans backticks.\n\nFormat:\n{"nom_complet":"Prénom NOM","titre":"Titre principal","telephone":"0600000000","email":"email@domaine.com","linkedin":"linkedin.com/in/profil","localisation":"Ville CodePostal","disponibilite":"Immédiate","certifications":["cert1","cert2"],"langues":"Français : Courant · Anglais : Courant"}\n\nCV:\n${cvTxt.substring(0,3000)}`
-    }], 300, 0);
-    userProfile = JSON.parse(raw.replace(/```json|```/g,'').trim());
-    localStorage.setItem('lj_profile', JSON.stringify(userProfile));
-    toast('Profil extrait : ' + userProfile.nom_complet, 'ok');
-  } catch(e) { console.warn('extractProfile:', e); }
+    const raw=await groq([{role:'user',content:'Analyse ce CV et extrais les informations. JSON uniquement, sans backticks.\nFormat:\n{"nom_complet":"Prénom NOM","titre":"Titre principal","telephone":"0600000000","email":"email@domaine.com","linkedin":"linkedin.com/in/profil","localisation":"Ville","disponibilite":"Immédiate","certifications":["cert1"],"langues":"Français : Courant"}\n\nCV:\n'+cvTxt.substring(0,3000)}],300,0);
+    userProfile=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    localStorage.setItem('lj_profile',JSON.stringify(userProfile));
+    toast('Profil extrait : '+userProfile.nom_complet,'ok');
+  } catch(e) { console.warn('extractProfile:',e); }
 }
 
-// ── SCRAPING (POST avec clés utilisateur)
+// ── SCRAPING (GET - sans clés)
 async function scrape() {
-  if (!ftAppId && !azAppId) {
-    toast('Configurez au moins une source (FT ou Adzuna) dans ⚙', 'err');
-    openSetup(); return;
-  }
   const btn=document.getElementById('scrpbtn'), sp=document.getElementById('scrpsp'), txt=document.getElementById('scrptxt');
   btn.disabled=true; sp.classList.add('on'); txt.textContent='Recherche...';
   try {
-    const r = await fetch('/api/jobs', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ft_app_id:ftAppId, ft_secret:ftSecret, az_app_id:azAppId, az_key:azKey})
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const d = await r.json();
-    const existIds = new Set(jobs.map(j=>j.id));
-    let added = 0;
-    for (const j of (d.jobs||[])) { if(!existIds.has(j.id)){jobs.push(j);added++;} }
-    localStorage.setItem('lj_j', JSON.stringify(jobs));
-    render();
-    toast(added + ' nouvelles offres', 'ok');
-    autoScore();
-  } catch(e) { toast('Erreur: ' + e.message, 'err'); }
+    const r=await fetch('/api/jobs'); if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const existIds=new Set(jobs.map(j=>j.id)); let added=0;
+    for(const j of (d.jobs||[])){ if(!existIds.has(j.id)){jobs.push(j);added++;} }
+    localStorage.setItem('lj_j',JSON.stringify(jobs));
+    render(); toast(added+' nouvelles offres','ok'); autoScore();
+  } catch(e) { toast('Erreur: '+e.message,'err'); }
   finally { btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher'; }
 }
 
 // ── ATS SCORE
 async function autoScore() {
-  const unscored = jobs.filter(j=>j._sc===undefined).slice(0,10);
-  for (const j of unscored) { await scoreOne(j); await wait(350); }
+  const unscored=jobs.filter(j=>j._sc===undefined).slice(0,8);
+  for(const j of unscored){ await scoreOne(j); await wait(350); }
 }
 
 async function scoreOne(job) {
-  if (!gkey || !cvTxt) return;
+  if(!gkey||!cvTxt) return;
   try {
-    const r = await groq([{role:'user', content:
-      'Réponds UNIQUEMENT par un entier 0-100: score ATS entre ce profil et cette offre.\n\nPROFIL:\n'+cvTxt.substring(0,1200)+'\n\nOFFRE:\n'+(job.title||'')+' '+(job.company||'')+'\n'+(job.description||'').substring(0,300)
-    }], 5, 0);
-    const sc = parseInt(r.trim());
-    if (!isNaN(sc)) { job._sc=sc; localStorage.setItem('lj_j',JSON.stringify(jobs)); render(); }
+    const r=await groq([{role:'user',content:'Réponds UNIQUEMENT par un entier 0-100: score ATS entre ce profil et cette offre.\n\nPROFIL:\n'+cvTxt.substring(0,1200)+'\n\nOFFRE:\n'+(job.title||'')+' '+(job.company||'')+'\n'+(job.description||'').substring(0,300)}],5,0);
+    const sc=parseInt(r.trim());
+    if(!isNaN(sc)&&sc>=0&&sc<=100){ job._sc=sc; localStorage.setItem('lj_j',JSON.stringify(jobs)); render(); }
   } catch {}
 }
 
-// ── GROQ (direct navigateur)
-async function groq(messages, maxTokens=1500, temp=0.65) {
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+gkey},
-    body: JSON.stringify({model:'llama-3.3-70b-versatile', max_tokens:maxTokens, temperature:temp, messages})
+// ── GROQ
+async function groq(messages,maxTokens=1500,temp=0.65) {
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+gkey},
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:maxTokens,temperature:temp,messages})
   });
-  if (!res.ok) { const e=await res.text(); throw new Error('Groq '+res.status+': '+e.substring(0,100)); }
+  if(!res.ok){ const e=await res.text(); throw new Error('Groq '+res.status+': '+e.substring(0,100)); }
   return (await res.json()).choices[0].message.content;
 }
 
 // ── RENDER GRID
 function render() {
-  const q = document.getElementById('srch').value.toLowerCase();
-  const minSc = parseInt(document.getElementById('scsel').value);
-  let filtered = jobs.filter(j=>{
-    if(filter==='new'&&doneSet.has(j.id)) return false;
-    if(filter==='done'&&!doneSet.has(j.id)) return false;
+  const q    = document.getElementById('srch').value.toLowerCase();
+  const minSc= parseInt(document.getElementById('scsel').value)||0;
+
+  let filtered=jobs.filter(j=>{
+    if(filter==='new'  && doneSet.has(j.id))  return false;
+    if(filter==='done' && !doneSet.has(j.id)) return false;
     if(q&&!((j.title||'').toLowerCase().includes(q)||(j.company||'').toLowerCase().includes(q))) return false;
-    if(j._sc!==undefined&&j._sc<minSc) return false;
+    if(minSc>0 && j._sc!==undefined && j._sc<minSc) return false;
     return true;
   });
   filtered.sort((a,b)=>(b._sc||0)-(a._sc||0));
-  const el = document.getElementById('grid');
-  if (!filtered.length) {
+
+  const hiddenByScore = minSc>0 ? jobs.filter(j=>j._sc!==undefined&&j._sc<minSc).length : 0;
+  const el=document.getElementById('grid');
+
+  if(!filtered.length){
     el.innerHTML='<div class="empty" style="grid-column:1/-1"><h3>Aucune offre</h3><p>Lancez une recherche ou changez les filtres</p></div>';
     return;
   }
-  el.innerHTML = filtered.map(j=>{
+
+  el.innerHTML=filtered.map(j=>{
     const sc=j._sc, scC=sc===undefined?'sc-na':sc>=80?'sc-hi':sc>=60?'sc-mid':'sc-lo', scT=sc===undefined?'…':sc+'%';
     const isSel=sel.has(j.id), isGen=genSet.has(j.id), isDone=doneSet.has(j.id);
+    const srcCls=j.source==='WTTJ'?'wttj':j.source==='APEC'?'apec':'hw';
     return `<div class="jcard ${isSel?'sel':''} ${isGen?'gen':''} ${isDone?'done':''}" onclick="toggleSel('${j.id}')">
-      <div class="jtop"><div class="jchk"></div><div class="jtitle" title="${j.title||''}">${j.title||'—'}</div><div class="jsc ${scC}">${isDone?'✓':scT}</div></div>
+      <div class="jtop">
+        <div class="jchk"></div>
+        <div class="jtitle" title="${j.title||''}">${j.title||'—'}</div>
+        <div class="jsc ${scC}">${isDone?'✓':scT}</div>
+      </div>
       <div class="jmeta"><span>${j.company||'—'}</span><span>📍 ${(j.location||'').split(',')[0]}</span>${j.salary&&j.salary!=='Non précisé'?`<span>💰 ${j.salary}</span>`:''}</div>
       <div class="jdesc">${(j.description||'').substring(0,130)}…</div>
-      <div class="jfoot"><span class="jsrc">${j.source||'—'}</span>${j.link?`<a class="jlink" href="${j.link}" target="_blank" onclick="event.stopPropagation()">↗ Voir</a>`:''}</div>
+      <div class="jfoot">
+        <span class="jsrc ${srcCls}">${j.source||'—'}</span>
+        ${j.link?`<a class="jlink" href="${j.link}" target="_blank" onclick="event.stopPropagation()">↗ Voir</a>`:''}
+      </div>
     </div>`;
-  }).join('');
+  }).join('')+(hiddenByScore>0?`<div style="grid-column:1/-1;text-align:center;font-size:11px;color:var(--m);padding:8px">${hiddenByScore} offre(s) masquée(s) par le filtre score</div>`:'');
 }
 
 // ── SELECT
-function toggleSel(id) { if(sel.has(id)) sel.delete(id); else sel.add(id); updSel(); render(); }
-function selAll() {
+function toggleSel(id){ if(sel.has(id))sel.delete(id);else sel.add(id); updSel(); render(); }
+function selAll(){
   const q=document.getElementById('srch').value.toLowerCase();
   const vis=jobs.filter(j=>!q||((j.title||'').toLowerCase().includes(q)||(j.company||'').toLowerCase().includes(q)));
   if(sel.size===vis.length) sel.clear(); else vis.forEach(j=>sel.add(j.id));
   updSel(); render();
 }
-function updSel() {
-  const n=sel.size;
-  document.getElementById('selcnt').textContent=n;
-  document.getElementById('genbtn').classList.toggle('show',n>0);
-}
-function setChip(f,el) {
-  filter=f;
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on'); render();
+function updSel(){ const n=sel.size; document.getElementById('selcnt').textContent=n; document.getElementById('genbtn').classList.toggle('show',n>0); }
+function setChip(f,el){ filter=f; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); render(); }
+
+// ── RESET JOBS
+function confirmReset(){ document.getElementById('resetov').classList.remove('hide'); }
+function doReset(){
+  jobs=[]; sel.clear(); localStorage.setItem('lj_j','[]');
+  document.getElementById('resetov').classList.add('hide');
+  render(); toast('Offres vidées','ok');
 }
 
-// ── GENERATE (séquentiel — CV complet)
-async function genSelected() {
-  if (!gkey) { toast('Configurez votre clé Groq', 'err'); openSetup(); return; }
-  if (!cvTxt) { toast('Uploadez votre CV d\'abord', 'err'); openSetup(); return; }
-  const ids = [...sel]; sel.clear(); updSel();
+// ── GENERATE
+async function genSelected(){
+  if(!gkey){ toast('Configurez votre clé Groq','err'); openSetup(); return; }
+  if(!cvTxt){ toast('Uploadez votre CV d\'abord','err'); openSetup(); return; }
+  const ids=[...sel]; sel.clear(); updSel();
   ids.forEach(id=>genSet.add(id)); render();
   document.getElementById('genbar').classList.add('show');
-  toast('Génération séquentielle de '+ids.length+' candidature(s) — ~'+ids.length*20+'s...', 'info');
-  for (let i=0; i<ids.length; i++) {
-    await genOne(ids[i]);
-    if (i<ids.length-1) await wait(1500);
-  }
+  toast('Génération de '+ids.length+' candidature(s) — ~'+ids.length*20+'s...','info');
+  for(let i=0;i<ids.length;i++){ await genOne(ids[i]); if(i<ids.length-1) await wait(1500); }
   document.getElementById('genbar').classList.remove('show');
 }
 
 async function genOne(jobId) {
-  const job = jobs.find(j=>j.id===jobId);
-  if (!job) { genSet.delete(jobId); return; }
+  const job=jobs.find(j=>j.id===jobId); if(!job){genSet.delete(jobId);return;}
   try {
-    const content = await groq([
-      {role:'system', content:'Tu es le candidat décrit dans le CV fourni. Réponds UNIQUEMENT en français. Respecte exactement le format demandé. N\'invente rien.'},
-      {role:'user', content: buildPrompt(job)}
-    ], 3000, 0.65);
+    const content=await groq([
+      {role:'system',content:'Tu es le candidat décrit dans le CV. Réponds UNIQUEMENT en français. Respecte exactement le format. N\'invente rien.'},
+      {role:'user',content:buildPrompt(job)}
+    ],3000,0.65);
 
-    const letterM = content.match(/===LETTRE===\s*\n([\s\S]*?)===OBJET===/);
-    const objetM  = content.match(/===OBJET===\s*\n([^\n]+)/);
-    const profilM = content.match(/===PROFIL===\s*\n([\s\S]*?)===COMP===/);
-    const compM   = content.match(/===COMP===\s*\n([\s\S]*?)===EXP===/);
-    const expM    = content.match(/===EXP===\s*\n([\s\S]*?)===FIN===/);
+    const lM=content.match(/===LETTRE===\s*\n([\s\S]*?)===OBJET===/);
+    const oM=content.match(/===OBJET===\s*\n([^\n]+)/);
+    const pM=content.match(/===PROFIL===\s*\n([\s\S]*?)===COMP===/);
+    const cM=content.match(/===COMP===\s*\n([\s\S]*?)===EXP===/);
+    const eM=content.match(/===EXP===\s*\n([\s\S]*?)===FIN===/);
 
-    const result = {
-      id: jobId, jobTitle: job.title, company: job.company, jobLink: job.link,
-      subject: objetM?.[1]?.trim() || 'Candidature '+job.title,
-      letter:  letterM?.[1]?.trim() || content,
-      profil:  profilM?.[1]?.trim() || '',
-      comp:    compM?.[1]?.trim() || '',
-      exp:     expM?.[1]?.trim() || '',
-      score: job._sc, ts: Date.now(), _new: true
+    const result={
+      id:jobId, jobTitle:job.title, company:job.company, jobLink:job.link,
+      subject:oM?.[1]?.trim()||'Candidature '+job.title,
+      letter: lM?.[1]?.trim()||content,
+      profil: pM?.[1]?.trim()||'',
+      comp:   cM?.[1]?.trim()||'',
+      exp:    eM?.[1]?.trim()||'',
+      score:job._sc, ts:Date.now(), _new:true
     };
-    results = results.filter(r=>r.id!==jobId);
-    results.unshift(result);
-    localStorage.setItem('lj_r', JSON.stringify(results));
+    results=results.filter(r=>r.id!==jobId); results.unshift(result);
+    statuses[jobId]=statuses[jobId]||'generated';
+    localStorage.setItem('lj_r',JSON.stringify(results));
+    localStorage.setItem('lj_st',JSON.stringify(statuses));
     doneSet.add(jobId); genSet.delete(jobId); render(); updBadge(); renderReady();
-    toast('✦ '+job.company+' — prête', 'ok');
-  } catch(e) {
-    genSet.delete(jobId); render();
-    toast('Erreur '+( job.company||jobId)+': '+e.message, 'err');
-  }
+    syncResult(result);
+    toast('✦ '+job.company+' — prête','ok');
+  } catch(e){ genSet.delete(jobId); render(); toast('Erreur '+(job.company||jobId)+': '+e.message,'err'); }
 }
 
-function buildPrompt(job) {
+function buildPrompt(job){
   return `Génère une candidature pour ce poste en utilisant UNIQUEMENT les informations du CV fourni.
 
-OFFRE: ${job.title} chez ${job.company} — ${job.location}
+OFFRE: ${job.title} chez ${job.company} — ${job.location||''}
 ${(job.description||'').substring(0,500)}
 
 CV COMPLET:
 ${cvTxt}
 
-FORMAT EXACT (respecte les balises):
+FORMAT EXACT:
 
 ===LETTRE===
-[4 paragraphes: accroche percutante sur l'offre | 2 expériences réelles chiffrées du CV les plus pertinentes | valeur ajoutée concrète | disponibilité immédiate]
-Vous trouverez en pièce jointe une version de mon CV adaptée à votre offre ainsi que mon CV complet détaillant l'ensemble de mon parcours.
+[4 paragraphes: accroche percutante | 2 expériences réelles chiffrées les plus pertinentes | valeur ajoutée concrète | disponibilité immédiate]
+Vous trouverez en pièce jointe une version adaptée de mon CV ainsi que mon CV complet.
 Cordialement,
 [Prénom Nom du candidat extrait du CV]
 ===OBJET===
-Candidature ${job.title} - [Prénom Nom du candidat extrait du CV]
+Candidature ${job.title} - [Prénom Nom]
 ===PROFIL===
-[Titre adapté au poste] | [2-3 missions réelles les plus pertinentes du CV] | [Certifications du CV] | [Localisation] | Dispo immédiate
+[Titre adapté] | [2-3 missions réelles pertinentes] | [Certifications du CV] | [Localisation] | Dispo immédiate
 ===COMP===
-[8-10 compétences et outils du CV les plus pertinents pour CE poste, séparés par ·]
+[8-10 compétences et outils les plus pertinents, séparés par ·]
 ===EXP===
-[TOUTES les expériences professionnelles du CV dans l'ordre chronologique inverse. Format: "Entreprise | Rôle | Période" sur une ligne, puis bullet points avec • pour les réalisations. Les 2-3 expériences les plus pertinentes: 3 réalisations détaillées. Les autres: 1-2 réalisations. Toutes les expériences sans exception.]
+[TOUTES les expériences, ordre chronologique inverse. Format: "Entreprise | Rôle | Période" puis • réalisations.]
 ===FIN===`;
 }
 
-// ── READY TAB
-function updBadge() {
-  const n=results.filter(r=>r._new).length;
-  const b=document.getElementById('tbadge');
-  b.textContent=n; b.classList.toggle('show',n>0);
+// ── STATUS
+function setStatus(id,status){
+  statuses[id]=status; localStorage.setItem('lj_st',JSON.stringify(statuses));
+  const r=results.find(r=>r.id===id); if(r) syncResult(r);
+  renderReady(); renderStats();
+  toast(STATUS_LABELS[status]||status,'ok');
 }
 
-function renderReady() {
+// ── ARCHIVE
+function archiveResult(id){
+  archived.add(id); localStorage.setItem('lj_arch',JSON.stringify([...archived]));
+  const r=results.find(r=>r.id===id); if(r) syncResult(r);
+  renderReady(); renderArchives(); updBadge(); renderStats();
+  toast('Archivée','ok');
+}
+function unarchiveResult(id){
+  archived.delete(id); localStorage.setItem('lj_arch',JSON.stringify([...archived]));
+  const r=results.find(r=>r.id===id); if(r) syncResult(r);
+  renderReady(); renderArchives(); updBadge();
+  toast('Restaurée','ok');
+}
+
+// ── BADGE
+function updBadge(){
+  const active=results.filter(r=>!archived.has(r.id));
+  const n=active.filter(r=>r._new).length;
+  const b=document.getElementById('tbadge'); b.textContent=n; b.classList.toggle('show',n>0);
+}
+
+// ── RENDER READY
+function renderReady(){
   const el=document.getElementById('readyList');
-  if(!results.length){
-    el.innerHTML='<div class="empty"><h3>Aucune candidature</h3><p>Sélectionnez des offres et cliquez "Générer"</p></div>';
-    return;
-  }
-  el.innerHTML = results.map((r,i)=>{
-    const sc=r.score, scC=sc===undefined?'var(--m)':sc>=80?'var(--g)':sc>=60?'var(--y)':'var(--r)';
-    return `<div class="rcard">
-      <div class="rhead" onclick="togBody(${i})">
-        <div class="rtitle"><h4>${r.jobTitle}</h4><p>${r.company}</p></div>
-        ${sc!==undefined?`<div class="rsc" style="color:${scC}">${sc}%</div>`:''}
-        <div class="ractions" onclick="event.stopPropagation()">
-          <button class="rbtn dl" onclick="dlPDF('${r.id}')">⬇ PDF CV</button>
-          <button class="rbtn" onclick="copyLetter('${r.id}')">⎘ Lettre</button>
-          <button class="rbtn mail" onclick="openSendModal('${r.id}')">✉ Envoyer</button>
-          ${r.jobLink?`<a class="rbtn sec" href="${r.jobLink}" target="_blank" style="text-decoration:none">↗</a>`:''}
-        </div>
-        <div class="rtog">▾</div>
-      </div>
-      <div class="rbody" id="rb${i}">
-        <div style="font-size:11px;color:var(--m);margin:12px 0 4px">Objet : <strong style="color:var(--t)">${r.subject}</strong></div>
-        <div class="etgl" onclick="togEdit('${r.id}',${i})">✎ Modifier la lettre</div>
-        <div class="cv-preview" id="lprev_${i}">${r.letter}</div>
-        <textarea class="letter-ta" id="leta_${i}" style="display:none" onchange="updLetter('${r.id}',this.value)">${r.letter}</textarea>
-        ${r.profil?`<div style="font-size:11px;color:var(--m);margin-top:10px;margin-bottom:4px">Profil adapté</div><div class="cv-preview">${r.profil}</div>`:''}
-        ${r.comp?`<div style="font-size:11px;color:var(--m);margin-bottom:4px">Compétences</div><div class="cv-preview">${r.comp}</div>`:''}
-      </div>
-    </div>`;
-  }).join('');
-  results.forEach(r=>{r._new=false;});
-  localStorage.setItem('lj_r', JSON.stringify(results));
-  updBadge();
+  const active=results.filter(r=>!archived.has(r.id));
+  if(!active.length){ el.innerHTML='<div class="empty"><h3>Aucune candidature</h3><p>Sélectionnez des offres et cliquez "Générer"</p></div>'; results.forEach(r=>{r._new=false;}); localStorage.setItem('lj_r',JSON.stringify(results)); updBadge(); return; }
+  el.innerHTML=active.map((r,i)=>renderResultCard(r,'r'+i,false)).join('');
+  results.forEach(r=>{r._new=false;}); localStorage.setItem('lj_r',JSON.stringify(results)); updBadge();
 }
 
-function togBody(i){document.getElementById('rb'+i).classList.toggle('open');}
+// ── RENDER ARCHIVES
+function renderArchives(){
+  const el=document.getElementById('archList');
+  const list=results.filter(r=>archived.has(r.id));
+  if(!list.length){ el.innerHTML='<div class="empty"><h3>Aucune archive</h3><p>Archivez vos candidatures depuis l\'onglet Prêtes</p></div>'; return; }
+  el.innerHTML=list.map((r,i)=>renderResultCard(r,'a'+i,true)).join('');
+}
+
+function renderResultCard(r,idx,isArch){
+  const sc=r.score;
+  const scC=sc===undefined?'var(--m)':sc>=80?'var(--g)':sc>=60?'var(--y)':'var(--r)';
+  const st=statuses[r.id]||'generated';
+  const chips=Object.entries(STATUS_LABELS).filter(([k])=>k!=='generated').map(([k,v])=>
+    `<span class="stchip ${st===k?'on-'+k:''}" onclick="event.stopPropagation();setStatus('${r.id}','${k}')">${v}</span>`
+  ).join('');
+  return `<div class="rcard">
+    <div class="rhead" onclick="togBody('${idx}')">
+      <div class="rtitle"><h4>${r.jobTitle}</h4><p>${r.company}</p></div>
+      ${sc!==undefined?`<div class="rsc" style="color:${scC}">${sc}%</div>`:''}
+      <span class="sbadge sb-${st}">${STATUS_LABELS[st]||st}</span>
+      <div class="ractions" onclick="event.stopPropagation()">
+        <button class="rbtn dl" onclick="dlPDF('${r.id}')">⬇ PDF</button>
+        <button class="rbtn sec" onclick="copyLetter('${r.id}')">⎘</button>
+        <button class="rbtn mail" onclick="openSendModal('${r.id}')">✉</button>
+        ${!isArch?`<button class="rbtn arch" onclick="archiveResult('${r.id}')">📦</button>`:`<button class="rbtn unarch" onclick="unarchiveResult('${r.id}')">↩ Restaurer</button>`}
+        ${r.jobLink?`<a class="rbtn sec" href="${r.jobLink}" target="_blank" style="text-decoration:none;text-align:center">↗</a>`:''}
+      </div>
+      <div class="rtog">▾</div>
+    </div>
+    <div class="rbody" id="rb${idx}">
+      <div style="font-size:11px;color:var(--m);margin:10px 0 3px">Objet : <strong style="color:var(--t)">${r.subject}</strong></div>
+      <div class="status-row">${chips}</div>
+      <div class="etgl" onclick="togEdit('${r.id}','${idx}')">✎ Modifier la lettre</div>
+      <div class="cv-preview" id="lprev_${idx}">${r.letter}</div>
+      <textarea class="letter-ta" id="leta_${idx}" style="display:none" onchange="updLetter('${r.id}',this.value)">${r.letter}</textarea>
+      ${r.profil?`<div style="font-size:11px;color:var(--m);margin-top:8px;margin-bottom:3px">Profil adapté</div><div class="cv-preview">${r.profil}</div>`:''}
+      ${r.comp?`<div style="font-size:11px;color:var(--m);margin-bottom:3px">Compétences</div><div class="cv-preview">${r.comp}</div>`:''}
+    </div>
+  </div>`;
+}
+
+function togBody(i){ document.getElementById('rb'+i)?.classList.toggle('open'); }
 function togEdit(id,i){
-  const prev=document.getElementById('lprev_'+i), ta=document.getElementById('leta_'+i);
+  const prev=document.getElementById('lprev_'+i), ta=document.getElementById('leta_'+i); if(!prev||!ta) return;
   const show=ta.style.display==='none';
   prev.style.display=show?'none':'block'; ta.style.display=show?'block':'none';
 }
-function updLetter(id,val){const r=results.find(r=>r.id===id);if(r){r.letter=val;localStorage.setItem('lj_r',JSON.stringify(results));}}
+function updLetter(id,val){ const r=results.find(r=>r.id===id); if(r){r.letter=val;localStorage.setItem('lj_r',JSON.stringify(results));syncResult(r);} }
 function copyLetter(id){
   const r=results.find(r=>r.id===id); if(!r) return;
   navigator.clipboard.writeText('Objet: '+r.subject+'\n\n'+r.letter).then(()=>toast('Lettre copiée','ok'));
 }
 
+// ── RENDER STATS
+function renderStats(){
+  const el=document.getElementById('statsContent'); if(!el) return;
+  const total      =results.length;
+  const nbSent     =results.filter(r=>(statuses[r.id]||'generated')!=='generated').length;
+  const nbReplied  =results.filter(r=>statuses[r.id]==='replied').length;
+  const nbInterview=results.filter(r=>statuses[r.id]==='interview').length;
+  const nbOffer    =results.filter(r=>statuses[r.id]==='offer').length;
+  const nbRejected =results.filter(r=>statuses[r.id]==='rejected').length;
+  const scores     =results.map(r=>r.score).filter(s=>s!=null);
+  const avgSc      =scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
+  const srcCount={};
+  jobs.forEach(j=>{ srcCount[j.source]=(srcCount[j.source]||0)+1; });
+  const maxSrc=Math.max(...Object.values(srcCount),1);
+  const buckets=[0,0,0,0,0];
+  scores.forEach(s=>{ buckets[Math.min(Math.floor(s/20),4)]++; });
+  const maxBucket=Math.max(...buckets,1);
+  const txReponse=nbSent>0?Math.round(nbReplied/nbSent*100):0;
+  const txEntretien=nbReplied>0?Math.round(nbInterview/nbReplied*100):0;
+
+  el.innerHTML=`
+    <div class="stat-cards">
+      <div class="stat-card"><div class="sn" style="color:var(--t)">${total}</div><div class="sl">Générées</div></div>
+      <div class="stat-card"><div class="sn" style="color:var(--a)">${nbSent}</div><div class="sl">Envoyées</div></div>
+      <div class="stat-card"><div class="sn" style="color:#00c4ff">${nbInterview}</div><div class="sl">Entretiens</div></div>
+      <div class="stat-card"><div class="sn" style="color:var(--g)">${nbOffer}</div><div class="sl">Offres</div></div>
+      <div class="stat-card"><div class="sn" style="color:var(--r)">${nbRejected}</div><div class="sl">Refus</div></div>
+      ${avgSc!=null?`<div class="stat-card"><div class="sn" style="color:${avgSc>=75?'var(--g)':avgSc>=60?'var(--y)':'var(--r)'}">${avgSc}%</div><div class="sl">ATS moyen</div></div>`:''}
+    </div>
+
+    <div class="stat-section">
+      <h3>Pipeline candidatures</h3>
+      <div class="pipeline">
+        <div class="pipe-step"><div class="pn">${total}</div><div class="pl">Générées</div></div>
+        <div class="pipe-step p-sent"><div class="pn" style="color:var(--a)">${nbSent}</div><div class="pl">Envoyées</div></div>
+        <div class="pipe-step p-replied"><div class="pn" style="color:var(--y)">${nbReplied}</div><div class="pl">Réponses</div></div>
+        <div class="pipe-step p-interview"><div class="pn" style="color:#00c4ff">${nbInterview}</div><div class="pl">Entretiens</div></div>
+        <div class="pipe-step p-offer"><div class="pn" style="color:var(--g)">${nbOffer}</div><div class="pl">Offres</div></div>
+      </div>
+      ${total>0?`<div style="font-size:11px;color:var(--m);margin-top:9px">Taux de réponse : <strong style="color:var(--t)">${txReponse}%</strong> &nbsp;·&nbsp; Taux entretien : <strong style="color:var(--t)">${txEntretien}%</strong></div>`:''}
+    </div>
+
+    ${Object.keys(srcCount).length?`<div class="stat-section">
+      <h3>Sources (${jobs.length} offres)</h3>
+      ${['WTTJ','APEC','HelloWork'].filter(s=>srcCount[s]).map(s=>`
+        <div class="src-row">
+          <span class="src-name">${s}</span>
+          <div class="src-bar"><div class="src-fill ${s==='WTTJ'?'wttj':s==='APEC'?'apec':'hw'}" style="width:${Math.round((srcCount[s]||0)/maxSrc*100)}%"></div></div>
+          <span class="src-count">${srcCount[s]||0}</span>
+        </div>`).join('')}
+    </div>`:''}
+
+    ${scores.length?`<div class="stat-section">
+      <h3>Distribution ATS (${scores.length} scorées)</h3>
+      <div class="score-dist">
+        ${buckets.map(b=>`<div class="sc-bar" style="height:${Math.round(b/maxBucket*100)}%"></div>`).join('')}
+      </div>
+      <div class="sc-bar-labels"><span>0-20</span><span>20-40</span><span>40-60</span><span>60-80</span><span>80+</span></div>
+    </div>`:''}
+  `;
+}
+
 // ── PDF
-function buildPDFDoc(r) {
-  const p          = userProfile || {};
-  const nomComplet = p.nom_complet   || 'Candidat';
-  const titre      = p.titre         || 'Professionnel';
-  const telephone  = p.telephone     || '';
-  const email      = p.email         || '';
-  const localisa   = p.localisation  || '';
-  const linkedin   = p.linkedin      || '';
-  const dispos     = p.disponibilite || 'Disponible immédiatement';
-  const langues    = p.langues       || '';
-  const certs      = Array.isArray(p.certifications) ? p.certifications : [];
-
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({unit:'mm',format:'a4'});
+function buildPDFDoc(r){
+  const p=userProfile||{};
+  const nom=(p.nom_complet||'Candidat'), titre=(p.titre||'Professionnel');
+  const tel=(p.telephone||''), email=(p.email||''), loc=(p.localisation||''), li=(p.linkedin||'');
+  const dispo=(p.disponibilite||'Disponible immédiatement'), langues=(p.langues||'');
+  const certs=Array.isArray(p.certifications)?p.certifications:[];
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'});
   const W=210,M=18,LW=W-M*2; let y=20;
-
-  function txt(t,sz,bold,col,lh){
-    doc.setFontSize(sz); doc.setFont('helvetica',bold?'bold':'normal');
-    col?doc.setTextColor(...col):doc.setTextColor(25,25,35);
-    const lines=doc.splitTextToSize(t||'',LW);
-    const h=lines.length*(lh||sz*0.42);
-    if(y+h>285){doc.addPage();y=20;}
-    doc.text(lines,M,y); y+=h+2;
-  }
-  function hr(col){doc.setDrawColor(...(col||[108,99,255]));doc.setLineWidth(0.25);doc.line(M,y,W-M,y);y+=4;}
-  function sec(title){y+=3;hr([108,99,255]);txt(title,9,true,[108,99,255],4);y+=1;}
-
-  // EN-TÊTE
-  txt(nomComplet.toUpperCase(),18,true,[15,15,25],8);
-  txt(titre,10,false,[80,80,100],4.5); y+=1;
-  const contact=[telephone,email,localisa,dispos].filter(Boolean).join('  ·  ');
-  if(contact) txt(contact,9,false,[90,90,110],4); y+=1;
-  if(linkedin) txt(linkedin,9,false,[108,99,255],4);
-  y+=2; hr([200,200,215]);
-
+  function txt(t,sz,bold,col,lh){ doc.setFontSize(sz); doc.setFont('helvetica',bold?'bold':'normal'); col?doc.setTextColor(...col):doc.setTextColor(25,25,35); const lines=doc.splitTextToSize(t||'',LW); const h=lines.length*(lh||sz*0.42); if(y+h>285){doc.addPage();y=20;} doc.text(lines,M,y); y+=h+2; }
+  function hr(col){ doc.setDrawColor(...(col||[108,99,255])); doc.setLineWidth(0.25); doc.line(M,y,W-M,y); y+=4; }
+  function sec(title){ y+=3; hr([108,99,255]); txt(title,9,true,[108,99,255],4); y+=1; }
+  txt(nom.toUpperCase(),18,true,[15,15,25],8); txt(titre,10,false,[80,80,100],4.5); y+=1;
+  const contact=[tel,email,loc,dispo].filter(Boolean).join('  ·  '); if(contact) txt(contact,9,false,[90,90,110],4); y+=1;
+  if(li) txt(li,9,false,[108,99,255],4); y+=2; hr([200,200,215]);
   if(r.profil){sec('PROFIL PROFESSIONNEL');txt(r.profil,10,false,[35,35,55],5);}
-
-  if(r.comp){
-    sec('COMPÉTENCES CLÉS');
-    const comps=r.comp.split(/[·,\n]/).map(s=>s.trim()).filter(Boolean);
-    txt(comps.join('  ·  '),10,false,[35,35,55],5);
-  }
-
+  if(r.comp){sec('COMPÉTENCES CLÉS');txt(r.comp.split(/[·,\n]/).map(s=>s.trim()).filter(Boolean).join('  ·  '),10,false,[35,35,55],5);}
   if(r.exp){
     sec('EXPÉRIENCES PROFESSIONNELLES');
-    const lines=r.exp.split('\n');
-    for(const line of lines){
-      const clean=line.trim(); if(!clean) continue;
-      if(clean.includes('|')) txt(clean.replace(/\|/g,'—'),10,true,[25,25,45],5);
-      else if(clean.startsWith('•')||clean.startsWith('-')) txt('  '+clean,9,false,[60,60,80],4.2);
-      else txt(clean,9,false,[60,60,80],4.2);
-    }
+    for(const line of r.exp.split('\n')){ const clean=line.trim(); if(!clean) continue; if(clean.includes('|')) txt(clean.replace(/\|/g,'—'),10,true,[25,25,45],5); else if(clean.startsWith('•')||clean.startsWith('-')) txt('  '+clean,9,false,[60,60,80],4.2); else txt(clean,9,false,[60,60,80],4.2); }
   }
-
-  if(certs.length){
-    sec('CERTIFICATIONS');
-    certs.forEach(c=>txt(c,9,false,[60,60,80],4.2));
-  }
-
+  if(certs.length){sec('CERTIFICATIONS');certs.forEach(c=>txt(c,9,false,[60,60,80],4.2));}
   if(langues){sec('LANGUES');txt(langues,9,false,[60,60,80],4.2);}
-
   const pages=doc.internal.getNumberOfPages();
-  for(let i=1;i<=pages;i++){
-    doc.setPage(i); doc.setFontSize(8); doc.setTextColor(160,160,180);
-    doc.text(`${i}/${pages}`,W-M,291);
-    doc.text(nomComplet+' — '+titre,M,291);
-  }
+  for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(160,160,180);doc.text(`${i}/${pages}`,W-M,291);doc.text(nom+' — '+titre,M,291);}
   return doc;
 }
-
-function dlPDF(id){
-  const r=results.find(r=>r.id===id); if(!r) return;
-  const doc=buildPDFDoc(r);
-  const p=userProfile||{};
-  const nom=(p.nom_complet||'CV').replace(/[^a-zA-Z0-9]/g,'_').substring(0,20);
-  const poste=(r.jobTitle||'Offre').replace(/[^a-zA-Z0-9]/g,'_').substring(0,20);
-  doc.save(`CV_${nom}_${poste}.pdf`);
-  toast('PDF téléchargé','ok');
-}
-
-function getPDFb64(r){
-  return buildPDFDoc(r).output('datauristring').split(',')[1];
-}
+function dlPDF(id){ const r=results.find(r=>r.id===id); if(!r) return; const p=userProfile||{}; const n=(p.nom_complet||'CV').replace(/[^a-zA-Z0-9]/g,'_').substring(0,18); const pos=(r.jobTitle||'Offre').replace(/[^a-zA-Z0-9]/g,'_').substring(0,18); buildPDFDoc(r).save(`CV_${n}_${pos}.pdf`); toast('PDF téléchargé','ok'); }
+function getPDFb64(r){ return buildPDFDoc(r).output('datauristring').split(',')[1]; }
 
 // ── SEND EMAIL
 function openSendModal(id){
   if(!gmailUser||!gmailPass){toast('Configurez Gmail dans ⚙ Config','err');openSetup();return;}
-  if(!cvB64){toast('CV original manquant — re-uploadez votre PDF','err');return;}
-  currentSendId=id;
-  const r=results.find(r=>r.id===id); if(!r) return;
+  if(!cvB64){toast('CV original manquant — re-uploadez','err');return;}
+  currentSendId=id; const r=results.find(r=>r.id===id); if(!r) return;
   document.getElementById('sendtitle').textContent=r.jobTitle+' — '+r.company;
   document.getElementById('sendto').value=gmailUser;
   document.getElementById('sendov').classList.remove('hide');
 }
-function closeSendModal(){document.getElementById('sendov').classList.add('hide');currentSendId=null;}
+function closeSendModal(){ document.getElementById('sendov').classList.add('hide'); currentSendId=null; }
 
 async function doSend(){
   const id=currentSendId, r=results.find(r=>r.id===id); if(!r) return;
-  const to=document.getElementById('sendto').value.trim();
-  if(!to){toast('Email destinataire requis','err');return;}
+  const to=document.getElementById('sendto').value.trim(); if(!to){toast('Email requis','err');return;}
   const btn=document.getElementById('msendbtn'), sp=document.getElementById('sendsp');
   btn.disabled=true; sp.classList.add('on');
   try {
-    toast('Génération CV adapté...','info');
-    const adaptedB64=getPDFb64(r);
     const p=userProfile||{};
-    const nom=(p.nom_complet||'CV').replace(/[^a-zA-Z0-9]/g,'_').substring(0,20);
-    const poste=(r.jobTitle||'Offre').replace(/[^a-zA-Z0-9]/g,'_').substring(0,20);
-    toast('Envoi en cours...','info');
-    const res=await fetch('/api/send-email',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        gmail_user:gmailUser, gmail_pass:gmailPass, to, subject:r.subject, body:r.letter,
-        cv_adapted_b64:adaptedB64, cv_adapted_name:`CV_${nom}_${poste}_adapte.pdf`,
-        cv_original_b64:cvB64,     cv_original_name:`CV_${nom}_complet.pdf`
-      })
-    });
+    const n=(p.nom_complet||'CV').replace(/[^a-zA-Z0-9]/g,'_').substring(0,18);
+    const pos=(r.jobTitle||'Offre').replace(/[^a-zA-Z0-9]/g,'_').substring(0,18);
+    toast('Génération PDF...','info');
+    const adaptedB64=getPDFb64(r);
+    const res=await fetch('/api/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({gmail_user:gmailUser,gmail_pass:gmailPass,to,subject:r.subject,body:r.letter,cv_adapted_b64:adaptedB64,cv_adapted_name:`CV_${n}_${pos}_adapte.pdf`,cv_original_b64:cvB64,cv_original_name:`CV_${n}_complet.pdf`})});
     const data=await res.json();
-    if(data.ok){toast('✉ Envoyé → '+to,'ok');closeSendModal();}
+    if(data.ok){ setStatus(id,'sent'); toast('✉ Envoyé → '+to,'ok'); closeSendModal(); }
     else toast('Erreur: '+(data.error||'inconnue'),'err');
-  } catch(e){toast('Erreur réseau: '+e.message,'err');}
-  finally{btn.disabled=false;sp.classList.remove('on');}
+  } catch(e){ toast('Erreur: '+e.message,'err'); }
+  finally{ btn.disabled=false; sp.classList.remove('on'); }
 }
 
 // ── TABS
 function showTab(t){
   activeTab=t;
-  ['jobs','ready'].forEach(v=>{
-    document.getElementById('view'+v.charAt(0).toUpperCase()+v.slice(1)).classList.toggle('on',v===t);
-    document.getElementById('tab'+v.charAt(0).toUpperCase()+v.slice(1)).classList.toggle('on',v===t);
+  ['jobs','ready','arch','stats'].forEach(v=>{
+    const cap=v.charAt(0).toUpperCase()+v.slice(1);
+    document.getElementById('view'+cap)?.classList.toggle('on',v===t);
+    document.getElementById('tab'+cap)?.classList.toggle('on',v===t);
   });
-  if(t==='ready') renderReady();
+  if(t==='ready')  renderReady();
+  if(t==='arch')   renderArchives();
+  if(t==='stats')  renderStats();
 }
 
-function wait(ms){return new Promise(r=>setTimeout(r,ms));}
+function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 function toast(msg,type){
   const c=document.getElementById('toasts'), t=document.createElement('div');

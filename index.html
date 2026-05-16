@@ -506,52 +506,55 @@ const STATUS_LABELS = {generated:'Générée',sent:'Envoyée',replied:'Réponse'
 // ── SUPABASE
 async function initSupabase() {
   try {
-    const cfg = await fetch('/api/config').then(r=>r.json());
+    const res  = await fetch('/api/config');
+    const cfg  = await res.json();
     if (!cfg.supabase_url || !cfg.supabase_anon_key) {
-      // Supabase non configuré → bloquer l'accès
-      document.getElementById('loginov').classList.remove('hide');
-      document.getElementById('loginForm').innerHTML = `
-        <div style="text-align:center">
-          <div style="font-size:36px;margin-bottom:12px">⚙</div>
-          <h2 style="margin-bottom:8px;color:var(--r)">Configuration requise</h2>
-          <p class="sub">Les variables d'environnement Supabase ne sont pas définies sur Vercel.<br>Ajoutez <strong style="color:var(--t)">SUPABASE_URL</strong> et <strong style="color:var(--t)">SUPABASE_ANON_KEY</strong> dans les settings Vercel, puis redéployez.</p>
-          <div style="background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:12px;font-size:11px;color:var(--m);text-align:left;line-height:1.9">
-            1. <a href="https://supabase.com" target="_blank" style="color:var(--a)">supabase.com</a> → Créer un projet gratuit<br>
-            2. Exécuter le SQL de création des tables<br>
-            3. Vercel → Settings → Environment Variables<br>
-            4. Ajouter SUPABASE_URL + SUPABASE_ANON_KEY → Redéployer
-          </div>
-        </div>`;
-      return false;
+      showLoginError('Variables SUPABASE_URL / SUPABASE_ANON_KEY manquantes dans Vercel.');
+      return;
     }
     const {createClient} = window.supabase;
     sbClient = createClient(cfg.supabase_url, cfg.supabase_anon_key);
+
     sbClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         currentUser = session.user;
         const dot = document.getElementById('userDot');
         dot.textContent = (session.user.email||'?')[0].toUpperCase();
         dot.style.display = 'flex';
-        document.getElementById('loginov').classList.add('hide');
         await loadUserData();
-        continueInit();
+        continueInit(); // ferme loginov, ouvre config si besoin, sinon dashboard
       } else if (event === 'SIGNED_OUT') {
         currentUser = null;
         document.getElementById('userDot').style.display = 'none';
         document.getElementById('loginov').classList.remove('hide');
       }
     });
+
+    // Session déjà active (retour depuis magic link ou Google)
     const {data:{session}} = await sbClient.auth.getSession();
     if (session) {
       currentUser = session.user;
       const dot = document.getElementById('userDot');
       dot.textContent = (session.user.email||'?')[0].toUpperCase();
       dot.style.display = 'flex';
-      return true;
+      await loadUserData();
+      continueInit(); // ira au dashboard ou config
     }
-    document.getElementById('loginov').classList.remove('hide');
-    return false;
-  } catch(e) { console.warn('Supabase:', e); return false; }
+    // Sinon : login reste affiché (mis en place par init())
+  } catch(e) {
+    console.warn('Supabase init error:', e);
+    showLoginError('Erreur de connexion au serveur. Vérifiez le déploiement Vercel.');
+  }
+}
+
+function showLoginError(msg) {
+  const f = document.getElementById('loginForm');
+  if (f) f.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:32px;margin-bottom:10px">⚠️</div>
+      <h2 style="margin-bottom:8px;color:var(--r);font-size:14px">Erreur serveur</h2>
+      <p style="font-size:12px;color:var(--m);line-height:1.7">${msg}</p>
+    </div>`;
 }
 
 async function sendMagicLink() {
@@ -639,10 +642,10 @@ async function syncResult(r) {
 
 // ── INIT
 async function init() {
-  const hasSB = await initSupabase();
-  if (!hasSB && !sbClient) { continueInit(); return; }
-  if (currentUser) { await loadUserData(); continueInit(); return; }
-  // sinon onAuthStateChange attend le login
+  // Afficher le login en PREMIER, toujours
+  document.getElementById('loginov').classList.remove('hide');
+  await initSupabase();
+  // initSupabase gère tout: session active → continueInit, sinon login reste affiché
 }
 
 function continueInit() {

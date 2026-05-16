@@ -363,7 +363,16 @@ input[type=file]{display:none}
           <span id="loginSp" class="sp"></span>Recevoir le lien →
         </button>
       </div>
-      <p style="font-size:10px;color:var(--m);margin-top:10px">Aucun mot de passe. Lien valable 1 heure.</p>
+      <div style="display:flex;align-items:center;gap:8px;margin:10px 0">
+        <div style="flex:1;height:1px;background:var(--b)"></div>
+        <span style="font-size:10px;color:var(--m);font-family:'Space Mono',monospace">ou</span>
+        <div style="flex:1;height:1px;background:var(--b)"></div>
+      </div>
+      <button onclick="signInGoogle()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--b);background:var(--s2);color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s" onmouseover="this.style.borderColor='var(--a)'" onmouseout="this.style.borderColor='var(--b)'">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.4 30.2 0 24 0 14.8 0 6.9 5.4 3 13.3l7.8 6C12.8 13.1 17.9 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v8.7h12.4c-.5 2.8-2.1 5.2-4.5 6.8l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.4z"/><path fill="#FBBC05" d="M10.8 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.7l8.3-6z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.1-5.5c-2 1.4-4.6 2.2-8.1 2.2-6.1 0-11.2-3.6-13.2-9l-8.3 6C6.9 42.6 14.8 48 24 48z"/></svg>
+        Continuer avec Google
+      </button>
+      <p style="font-size:10px;color:var(--m);margin-top:10px;text-align:center">Magic link valable 1 heure · Aucun mot de passe</p>
     </div>
     <div id="loginConfirm" style="text-align:center;display:none">
       <div style="font-size:32px;margin-bottom:10px">📨</div>
@@ -535,7 +544,8 @@ async function sendMagicLink() {
   const btn=document.getElementById('loginBtn'), sp=document.getElementById('loginSp');
   btn.disabled=true; sp.classList.add('on');
   try {
-    const {error} = await sbClient.auth.signInWithOtp({email, options:{emailRedirectTo:window.location.href}});
+    const redirectTo = window.location.origin + window.location.pathname.replace(/\/+$/,'');
+    const {error} = await sbClient.auth.signInWithOtp({email, options:{emailRedirectTo: redirectTo}});
     if (error) throw error;
     document.getElementById('loginForm').style.display='none';
     document.getElementById('loginConfirm').style.display='block';
@@ -543,6 +553,18 @@ async function sendMagicLink() {
 }
 
 function skipLogin() { /* Auth obligatoire */ }
+
+async function signInGoogle() {
+  if (!sbClient) { toast('Supabase non configuré','err'); return; }
+  try {
+    const redirectTo = window.location.origin + window.location.pathname.replace(/\/+$/, '');
+    const {error} = await sbClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo }
+    });
+    if (error) throw error;
+  } catch(e) { toast('Erreur Google: '+e.message,'err'); }
+}
 
 function showUserMenu() {
   if (!currentUser) return;

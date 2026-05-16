@@ -438,9 +438,8 @@ input[type=file]{display:none}
     <div class="mrow">
       <button class="mbtn p" id="msave" onclick="saveSetup()" disabled>Enregistrer →</button>
       <button class="mbtn s" onclick="closeSetup()">Annuler</button>
+    </div></div>
     </div>
-  </div>
-</div>
 
 <!-- SEND MODAL -->
 <div class="ov hide" id="sendov">
@@ -543,7 +542,13 @@ async function initSupabase() {
       }
     });
     const {data:{session}} = await sbClient.auth.getSession();
-    if (session) { currentUser = session.user; return true; }
+    if (session) {
+      currentUser = session.user;
+      const dot = document.getElementById('userDot');
+      dot.textContent = (session.user.email||'?')[0].toUpperCase();
+      dot.style.display = 'flex';
+      return true;
+    }
     document.getElementById('loginov').classList.remove('hide');
     return false;
   } catch(e) { console.warn('Supabase:', e); return false; }
@@ -635,16 +640,17 @@ async function syncResult(r) {
 // ── INIT
 async function init() {
   const hasSB = await initSupabase();
-  if (hasSB && !currentUser) return;
-  continueInit();
+  if (!hasSB && !sbClient) { continueInit(); return; }
+  if (currentUser) { await loadUserData(); continueInit(); return; }
+  // sinon onAuthStateChange attend le login
 }
 
 function continueInit() {
-  // Toujours relire localStorage au dernier moment
-  if (!gkey)  gkey  = localStorage.getItem('lj_k')  || '';
-  if (!cvTxt) cvTxt = localStorage.getItem('lj_cv') || '';
-  if (!gkey || !cvTxt) { openSetup(); return; }
+  gkey  = gkey  || localStorage.getItem('lj_k')  || '';
+  cvTxt = cvTxt || localStorage.getItem('lj_cv') || '';
+  document.getElementById('loginov').classList.add('hide');
   document.getElementById('ov').classList.add('hide');
+  if (!gkey || !cvTxt) { openSetup(); return; }
   updCvStatus(); render(); updBadge(); renderReady();
   if (jobs.length === 0) scrape(); else autoScore();
 }
@@ -681,11 +687,13 @@ function saveSetup() {
   gkey      = document.getElementById('mkey').value.trim();
   gmailUser = document.getElementById('mgm').value.trim();
   gmailPass = document.getElementById('mgp').value.trim();
-  localStorage.setItem('lj_k',gkey); localStorage.setItem('lj_gm',gmailUser); localStorage.setItem('lj_gp',gmailPass);
+  localStorage.setItem('lj_k',gkey);
+  localStorage.setItem('lj_gm',gmailUser);
+  localStorage.setItem('lj_gp',gmailPass);
   document.getElementById('ov').classList.add('hide');
-  updCvStatus(); render(); updBadge(); renderReady();
-  toast('Configuration sauvegardée','ok');
+  toast('Configuration sauvegardée ✓','ok');
   syncProfile();
+  updCvStatus(); render(); updBadge(); renderReady();
   if (jobs.length === 0) scrape();
   if (gkey && cvTxt && !userProfile) extractProfile();
 }

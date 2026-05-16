@@ -9,7 +9,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
-:root{--bg:#09090d;--s1:#111118;--s2:#16161f;--b:#1f1f2e;--a:#6c63ff;--ag:rgba(108,99,255,.12);--g:#00d68f;--r:#ff4f6d;--y:#ffb800;--t:#e2e2f0;--m:#55556a}
+:root{--bg:#09090d;--s1:#111118;--s2:#16161f;--b:#1f1f2e;--a:#6c63ff;--ag:rgba(108,99,255,.12);--g:#00d68f;--r:#ff4f6d;--y:#ffb800;--t:#e2e2f0;--m:#55556a;--shadow:none}
+[data-theme="light"]{--bg:#f4f4f8;--s1:#ffffff;--s2:#f0f0f5;--b:#d8d8e8;--a:#5a52e8;--ag:rgba(90,82,232,.1);--g:#00a86b;--r:#e83550;--y:#d4920a;--t:#1a1a2e;--m:#888899;--shadow:0 1px 3px rgba(0,0,0,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 html{height:100%;font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--t)}
 body{height:100%;display:flex;flex-direction:column;overflow:hidden}
@@ -197,6 +198,15 @@ header{display:flex;align-items:center;gap:12px;padding:0 20px;height:48px;borde
 .sp.on{display:inline-block}
 @keyframes spi{to{transform:rotate(360deg)}}
 input[type=file]{display:none}
+/* THEME TOGGLE */
+.theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--b);background:var(--s2);color:var(--m);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;flex-shrink:0}
+.theme-btn:hover{border-color:var(--a);color:var(--a)}
+[data-theme="light"] .jcard{box-shadow:var(--shadow)}
+[data-theme="light"] .rcard{box-shadow:var(--shadow)}
+[data-theme="light"] .stat-card{box-shadow:var(--shadow)}
+[data-theme="light"] .stat-section{box-shadow:var(--shadow)}
+[data-theme="light"] header{box-shadow:0 1px 4px rgba(0,0,0,.06)}
+[data-theme="light"] .tabs{box-shadow:0 1px 4px rgba(0,0,0,.04)}
 /* SOURCE COLORS */
 .jsrc.wttj{border-color:rgba(255,79,109,.3);color:#ff6b8a}
 .jsrc.apec{border-color:rgba(0,214,143,.3);color:var(--g)}
@@ -274,6 +284,7 @@ input[type=file]{display:none}
   <div class="hsp"></div>
   <div class="cv-ok"><div class="d" id="cvDot"></div><span id="cvTxt">CV non chargé</span></div>
   <div class="user-dot" id="userDot" style="display:none" onclick="showUserMenu()">?</div>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Mode clair/sombre">🌙</button>
   <button class="hbtn" onclick="openSetup()">⚙ Config</button>
 </header>
 
@@ -583,10 +594,17 @@ async function loadUserData() {
   try {
     const {data:p} = await sbClient.from('profiles').select('*').eq('id',currentUser.id).single();
     if (p) {
+      // Supabase → local (seulement si non vide)
       if (p.groq_key)   { gkey=p.groq_key;       localStorage.setItem('lj_k',gkey); }
       if (p.gmail_user) { gmailUser=p.gmail_user; localStorage.setItem('lj_gm',gmailUser); }
       if (p.gmail_pass) { gmailPass=p.gmail_pass; localStorage.setItem('lj_gp',gmailPass); }
       if (p.cv_text)    { cvTxt=p.cv_text;        localStorage.setItem('lj_cv',cvTxt); }
+    } else {
+      // Nouveau compte (ex: Google) → syncer les données locales existantes vers Supabase
+      if (gkey || cvTxt) {
+        await syncProfile();
+        toast('Données locales synchronisées sur votre compte ✓','ok');
+      }
     }
     const {data:rr} = await sbClient.from('results').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
     if (rr && rr.length) {
@@ -596,8 +614,11 @@ async function loadUserData() {
       localStorage.setItem('lj_r',JSON.stringify(results));
       localStorage.setItem('lj_st',JSON.stringify(statuses));
       localStorage.setItem('lj_arch',JSON.stringify([...archived]));
+    } else if (results.length) {
+      // Sync les candidatures locales vers le nouveau compte
+      for (const r of results) await syncResult(r);
     }
-    toast('Données chargées ✓','ok');
+    if (p || gkey) toast('Compte connecté ✓','ok');
   } catch(e) { console.warn('loadUserData:',e); }
 }
 
@@ -1122,6 +1143,28 @@ function toast(msg,type){
   setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),400);},3500);
 }
 
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') !== 'light';
+  const newTheme = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme === 'dark' ? '' : 'light');
+  document.getElementById('themeBtn').textContent = newTheme === 'light' ? '☀️' : '🌙';
+  localStorage.setItem('lj_theme', newTheme);
+}
+
+function applyTheme() {
+  const saved = localStorage.getItem('lj_theme');
+  // Auto-detect: mobile souvent en extérieur → light par défaut si pas de préférence
+  const preferLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+  const theme = saved || (preferLight ? 'light' : 'dark');
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = '☀️';
+  }
+}
+
+applyTheme();
 init();
 </script>
 </body>

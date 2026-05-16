@@ -667,6 +667,8 @@ function updCvStatus() {
 
 // ── SETUP
 function openSetup() {
+  // Ne jamais ouvrir config si login pas encore fait
+  if (!document.getElementById('loginov').classList.contains('hide')) return;
   document.getElementById('mkey').value = gkey;
   document.getElementById('mgm').value  = gmailUser;
   document.getElementById('mgp').value  = gmailPass;

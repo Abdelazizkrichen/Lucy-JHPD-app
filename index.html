@@ -15,49 +15,99 @@
 html{height:100%;font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--t)}
 body{height:100%;display:flex;flex-direction:column;overflow:hidden}
 /* Sur mobile, on autorise le scroll natif dans les zones scrollables */
-@media(max-width:600px){
+@media(max-width:768px){
   html,body{height:100%;overflow:hidden}
-  /* Header compact */
+  /* Header */
   header{padding:0 12px;gap:8px}
   .logo{font-size:13px}
-  .cv-ok span{display:none} /* cache le texte, garde le point */
-  .hbtn{padding:6px 10px;font-size:10px;min-height:36px}
-  /* Beta banner plus compact */
+  .cv-ok span{display:none}
+  .hbtn{padding:8px 10px;font-size:10px;min-height:40px}
+  .theme-btn{min-height:40px;min-width:40px}
+  /* Beta banner */
   .beta-banner{font-size:10px;padding:6px 12px}
-  /* Tabs */
-  .tabs{padding:0 12px}
-  .tab{padding:10px 12px;font-size:11px}
-  /* Toolbar scroll horizontal sur mobile */
+  /* Tabs — scroll horizontal */
+  .tabs{padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:12px 14px;font-size:11px;white-space:nowrap;flex-shrink:0;min-height:44px}
+  /* Toolbar */
   .toolbar{padding:8px 12px;gap:6px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
   .toolbar::-webkit-scrollbar{display:none}
-  .srch{min-width:130px;font-size:11px}
-  .chip{font-size:10px;padding:4px 10px;white-space:nowrap}
-  .scsel{font-size:10px}
-  .selbtn{font-size:10px;padding:5px 8px;white-space:nowrap}
-  .genbtn{font-size:11px;padding:6px 12px;white-space:nowrap}
-  .scrpbtn{font-size:11px;padding:6px 10px;white-space:nowrap}
-  /* Grid 1 colonne */
+  .srch{min-width:130px;font-size:12px;min-height:40px}
+  .chip{font-size:10px;padding:6px 10px;white-space:nowrap;min-height:36px}
+  .scsel{font-size:11px;min-height:36px}
+  .selbtn,.resetbtn{font-size:10px;padding:6px 8px;white-space:nowrap;min-height:36px}
+  .genbtn{font-size:11px;padding:8px 14px;white-space:nowrap;min-height:36px}
+  .scrpbtn{font-size:11px;padding:8px 12px;white-space:nowrap;min-height:40px}
+  /* Grid */
   .grid{grid-template-columns:1fr}
-  .grid-scroll{padding:10px}
-  /* Cards mobile */
+  .grid-scroll,.list-scroll,.stats-scroll{padding:10px}
+  /* Job cards */
   .jcard{padding:12px}
-  .jtitle{font-size:11px}
-  /* Ready list */
-  .ready-scroll{padding:10px}
-  .rhead{padding:10px 12px;gap:8px}
-  .rtitle h4{font-size:12px}
-  .ractions{gap:4px}
-  .rbtn{padding:5px 8px;font-size:10px}
-  .rbody{padding:0 12px 12px}
-  /* Modal plein écran sur mobile */
+  .jtitle{font-size:12px}
+  /* Ready cards — le problème principal */
+  .rcard{margin-bottom:10px}
+  .rhead{
+    padding:14px 12px;
+    gap:8px;
+    min-height:60px;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .rtitle h4{font-size:13px}
+  .rtitle p{font-size:11px}
+  /* Actions sur mobile : wrap sur 2 lignes */
+  .ractions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    flex-shrink:0;
+    max-width:160px;
+  }
+  .rbtn{
+    padding:7px 9px;
+    font-size:10px;
+    min-height:36px;
+    min-width:36px;
+    text-align:center;
+  }
+  /* Flèche togBody — GRANDE zone de tap */
+  .rtog{
+    font-size:18px;
+    padding:8px 10px;
+    min-width:44px;
+    min-height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    flex-shrink:0;
+  }
+  /* Body ouvert */
+  .rbody{padding:0 12px 14px}
+  .letter-ta{font-size:13px;min-height:180px}
+  /* Status chips */
+  .stchip{padding:5px 10px;font-size:10px;min-height:36px}
+  /* Stats */
+  .stat-cards{grid-template-columns:repeat(3,1fr)}
+  .pipeline{flex-wrap:wrap}
+  .pipe-step{min-width:33%}
+  /* Modals */
   .ov{padding:0;align-items:flex-end}
-  .modal{width:100%;max-width:100%;border-radius:16px 16px 0 0;max-height:92vh;padding:20px 16px}
-  /* Inputs plus grands pour les doigts */
-  .mf input{padding:11px 12px;font-size:14px}
-  .mbtn{padding:13px;font-size:14px;min-height:48px}
-  /* Toasts en bas à gauche sur mobile */
-  .toasts{bottom:10px;right:10px;left:10px}
+  .modal{
+    width:100%;
+    max-width:100%;
+    border-radius:16px 16px 0 0;
+    max-height:90vh;
+    padding:20px 16px;
+  }
+  .mf input{padding:12px;font-size:14px;min-height:46px}
+  .mbtn{padding:14px;font-size:14px;min-height:50px}
+  /* Toasts */
+  .toasts{bottom:8px;right:8px;left:8px}
   .toast{max-width:100%}
+  /* Login modal */
+  #loginov .modal{border-radius:16px 16px 0 0}
 }
 header{display:flex;align-items:center;gap:12px;padding:0 20px;height:48px;border-bottom:1px solid var(--b);flex-shrink:0;background:var(--s1)}
 .logo{font-family:'Space Mono',monospace;font-weight:700;font-size:15px;color:var(--a)}
@@ -124,7 +174,7 @@ header{display:flex;align-items:center;gap:12px;padding:0 20px;height:48px;borde
 .ready-scroll::-webkit-scrollbar{width:4px}
 .ready-scroll::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
 .rcard{background:var(--s1);border:1px solid var(--b);border-radius:10px;margin-bottom:10px;overflow:hidden}
-.rhead{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:background .15s}
+.rhead{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;user-select:none}
 .rhead:hover{background:var(--s2)}
 .rtitle{flex:1}
 .rtitle h4{font-size:13px;font-weight:700;margin-bottom:2px}
@@ -139,7 +189,7 @@ header{display:flex;align-items:center;gap:12px;padding:0 20px;height:48px;borde
 .rbtn.sec:hover{border-color:var(--a);color:var(--a)}
 .rbtn.mail{background:rgba(108,99,255,.15);color:var(--a);border:1px solid rgba(108,99,255,.3)}
 .rbtn.mail:hover{background:rgba(108,99,255,.25)}
-.rtog{color:var(--m);font-size:12px;cursor:pointer;padding:4px 8px}
+.rtog{color:var(--m);font-size:14px;cursor:pointer;padding:8px 10px;min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;flex-shrink:0}
 .rbody{display:none;padding:0 16px 16px;border-top:1px solid var(--b)}
 .rbody.open{display:block}
 .letter-ta{width:100%;padding:12px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:12px;line-height:1.8;resize:none;outline:none;min-height:220px;margin:12px 0;transition:border-color .2s}
@@ -758,19 +808,22 @@ function arrayBufferToBase64(buf) {
 async function extractProfile() {
   if(!gkey||!cvTxt) return;
   try {
-    const raw=await groq([{role:'user',content:'Analyse ce CV et extrais les informations. JSON uniquement, sans backticks.\nFormat:\n{"nom_complet":"Prénom NOM","titre":"Titre principal","telephone":"0600000000","email":"email@domaine.com","linkedin":"linkedin.com/in/profil","localisation":"Ville","disponibilite":"Immédiate","certifications":["cert1"],"langues":"Français : Courant"}\n\nCV:\n'+cvTxt.substring(0,3000)}],300,0);
+    const prompt = 'Analyse ce CV et extrais les informations. JSON uniquement, sans backticks.\nFormat:\n{"nom_complet":"Prénom NOM","titre":"Titre principal","telephone":"0600000000","email":"email@domaine.com","linkedin":"linkedin.com/in/profil","localisation":"Ville","disponibilite":"Immédiate","certifications":["cert1"],"langues":"Français : Courant","keywords_recherche":["intitule1","intitule2","intitule3"]}\n\nPour keywords_recherche: 3-5 intitulés de poste courts en français adaptés au profil (ex: développeur fullstack, data scientist, chef de projet...).\n\nCV:\n'+cvTxt.substring(0,3000);
+    const raw=await groq([{role:'user',content:prompt}],400,0);
     userProfile=JSON.parse(raw.replace(/```json|```/g,'').trim());
     localStorage.setItem('lj_profile',JSON.stringify(userProfile));
     toast('Profil extrait : '+userProfile.nom_complet,'ok');
+    syncProfile();
   } catch(e) { console.warn('extractProfile:',e); }
 }
-
-// ── SCRAPING (GET - sans clés)
 async function scrape() {
   const btn=document.getElementById('scrpbtn'), sp=document.getElementById('scrpsp'), txt=document.getElementById('scrptxt');
   btn.disabled=true; sp.classList.add('on'); txt.textContent='Recherche...';
   try {
-    const r=await fetch('/api/jobs'); if(!r.ok) throw new Error('HTTP '+r.status);
+    // Envoyer les mots-clés extraits du CV de l'utilisateur
+    const kw = userProfile?.keywords_recherche;
+    const url = kw && kw.length ? '/api/jobs?kw='+encodeURIComponent(kw.join(',')) : '/api/jobs';
+    const r=await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
     const existIds=new Set(jobs.map(j=>j.id)); let added=0;
     for(const j of (d.jobs||[])){ if(!existIds.has(j.id)){jobs.push(j);added++;} }

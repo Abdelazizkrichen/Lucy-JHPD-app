@@ -15,8 +15,7 @@ WJ_APP = "CZMSE9B1IT"
 WJ_KEY = "bcca6f7f1a413c65bac9cc5dff4ceac8"
 UA     = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/121.0 Safari/537.36"
 
-# Fallback si pas encore de profil extrait
-DEFAULT_KW = ["product owner","chef de projet","développeur","data analyst","business analyst","consultant"]
+# Pas de fallback — keywords obligatoires depuis le CV utilisateur
 
 _ft_cache = {"tok": None, "exp": 0}
 
@@ -108,7 +107,11 @@ class handler(BaseHTTPRequestHandler):
         # Lire les mots-clés depuis query string ?kw=mot1,mot2,mot3
         qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         kw_param = qs.get('kw',[''])[0]
-        keywords = [k.strip() for k in kw_param.split(',') if k.strip()] if kw_param else DEFAULT_KW
+        keywords = [k.strip() for k in kw_param.split(',') if k.strip()]
+        if not keywords:
+            # Pas de keywords = pas de CV analysé → erreur explicite
+            self._json({"jobs":[],"total":0,"error":"Aucun mot-clé fourni — uploadez votre CV d'abord"})
+            return
         print(f"[Scraping] keywords: {keywords}")
         jobs, seen = [], set()
         for fn in [scrape_ft, scrape_adzuna, scrape_wttj]:

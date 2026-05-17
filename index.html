@@ -608,8 +608,21 @@ async function initSupabase() {
         continueInit(); // ferme loginov, ouvre config si besoin, sinon dashboard
       } else if (event === 'SIGNED_OUT') {
         currentUser = null;
+        // Reset état complet
+        gkey=''; cvTxt=''; cvB64=''; gmailUser=''; gmailPass=''; userProfile=null;
+        jobs=[]; results=[]; statuses={}; archived=new Set(); sel=new Set(); doneSet=new Set(); genSet=new Set();
+        // Cacher dashboard, montrer login
         document.getElementById('userDot').style.display = 'none';
         document.getElementById('loginov').classList.remove('hide');
+        document.getElementById('ov').classList.add('hide');
+        document.getElementById('viewJobs').classList.remove('on');
+        document.getElementById('viewReady').classList.remove('on');
+        document.getElementById('viewArch').classList.remove('on');
+        document.getElementById('viewStats').classList.remove('on');
+        document.getElementById('tabJobs').classList.remove('on');
+        document.getElementById('selBanner').style.display='none';
+        document.getElementById('grid').innerHTML='';
+        document.getElementById('readyList').innerHTML='';
       }
     });
 
@@ -776,7 +789,14 @@ function openSetup() {
 }
 
 function closeSetup() { if (gkey && cvTxt) document.getElementById('ov').classList.add('hide'); }
-function forceCloseSetup() { document.getElementById('ov').classList.add('hide'); }
+function forceCloseSetup() {
+  document.getElementById('ov').classList.add('hide');
+  // Si config suffisante → lancer le dashboard
+  if (gkey && cvTxt) {
+    updCvStatus(); render(); updBadge(); renderReady();
+    if (jobs.length === 0) scrape();
+  }
+}
 
 function chkModal() {
   const k = document.getElementById('mkey').value.trim();
@@ -785,8 +805,6 @@ function chkModal() {
 
 function saveSetup() {
   gkey      = document.getElementById('mkey').value.trim();
-  gmailUser = document.getElementById('mgm').value.trim();
-  gmailPass = document.getElementById('mgp').value.trim();
   localStorage.setItem('lj_k',gkey);
   document.getElementById('ov').classList.add('hide');
   toast('Configuration sauvegardée ✓','ok');

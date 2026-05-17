@@ -604,6 +604,7 @@ async function initSupabase() {
         const dot = document.getElementById('userDot');
         dot.textContent = (session.user.email||'?')[0].toUpperCase();
         dot.style.display = 'flex';
+        localStorage.setItem('lj_last_email', session.user.email||'');
         await loadUserData();
         continueInit(); // ferme loginov, ouvre config si besoin, sinon dashboard
       } else if (event === 'SIGNED_OUT') {
@@ -697,13 +698,31 @@ async function signInGoogle() {
 }
 
 function showUserMenu() {
-  if (!currentUser) return;
-  document.getElementById('logoutEmail').textContent = currentUser.email;
+  const email = currentUser?.email || localStorage.getItem('lj_last_email') || 'Votre compte';
+  document.getElementById('logoutEmail').textContent = email;
   document.getElementById('logoutov').classList.remove('hide');
 }
 function doLogout() {
   document.getElementById('logoutov').classList.add('hide');
-  sbClient?.auth.signOut();
+  // Reset état local immédiatement (ne pas attendre signOut)
+  gkey=''; cvTxt=''; cvB64=''; gmailUser=''; gmailPass=''; userProfile=null;
+  jobs=[]; results=[]; statuses={}; archived=new Set(); sel=new Set(); doneSet=new Set(); genSet=new Set();
+  currentUser=null;
+  // UI → retour login
+  document.getElementById('userDot').style.display='none';
+  document.getElementById('loginov').classList.remove('hide');
+  document.getElementById('ov').classList.add('hide');
+  document.getElementById('selBanner').style.display='none';
+  ['Jobs','Ready','Arch','Stats'].forEach(v=>{
+    document.getElementById('view'+v)?.classList.remove('on');
+    document.getElementById('tab'+v)?.classList.remove('on');
+  });
+  document.getElementById('viewJobs').classList.add('on');
+  document.getElementById('tabJobs').classList.add('on');
+  document.getElementById('grid').innerHTML='';
+  document.getElementById('readyList').innerHTML='';
+  // Déconnexion Supabase en arrière-plan
+  sbClient?.auth.signOut().catch(()=>{});
 }
 
 async function loadUserData() {
@@ -865,17 +884,37 @@ async function extractProfile() {
 }
 async function scrape() {
   const btn=document.getElementById('scrpbtn'), sp=document.getElementById('scrpsp'), txt=document.getElementById('scrptxt');
-  btn.disabled=true; sp.classList.add('on'); txt.textContent='Recherche...';
+  btn.disabled=true; sp.classList.add('on');
+
   try {
-    // Envoyer les mots-clés extraits du CV de l'utilisateur
+    // Pas de CV → impossible de chercher
+    if (!cvTxt) {
+      toast('Uploadez votre CV d'abord pour obtenir des offres adaptées','err');
+      btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher';
+      return;
+    }
+    // Profil pas encore extrait → extraire d'abord (bloquant)
+    if (!userProfile?.keywords_recherche?.length && gkey) {
+      txt.textContent='Analyse du CV...';
+      toast('Extraction des mots-clés de votre CV...','info');
+      await extractProfile();
+    }
+    // Vérifier qu'on a bien des keywords
     const kw = userProfile?.keywords_recherche;
-    const url = kw && kw.length ? '/api/jobs?kw='+encodeURIComponent(kw.join(',')) : '/api/jobs';
+    if (!kw || !kw.length) {
+      toast('Impossible d'extraire les mots-clés du CV — vérifiez votre clé Groq','err');
+      btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher';
+      return;
+    }
+    txt.textContent='Recherche...';
+    toast('🔍 Recherche : '+kw.slice(0,3).join(', ')+(kw.length>3?' ...':''),'info');
+    const url = '/api/jobs?kw='+encodeURIComponent(kw.join(','));
     const r=await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
     const existIds=new Set(jobs.map(j=>j.id)); let added=0;
     for(const j of (d.jobs||[])){ if(!existIds.has(j.id)){jobs.push(j);added++;} }
     localStorage.setItem('lj_j',JSON.stringify(jobs));
-    render(); toast(added+' nouvelles offres','ok'); autoScore();
+    render(); toast(added+' offres adaptées à votre profil','ok'); autoScore();
   } catch(e) { toast('Erreur: '+e.message,'err'); }
   finally { btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher'; }
 }

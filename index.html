@@ -372,7 +372,8 @@ input[type=file]{display:none}
         <option value="75" selected>Score ≥ 75%</option>
         <option value="85">Score ≥ 85%</option>
       </select>
-      <button class="selbtn" onclick="selAll()">☐ Tout sélectionner</button>
+      <button class="selbtn" onclick="selAll()">☐ Tout</button>
+      <button class="resetbtn" onclick="confirmReset()" title="Vider les offres">🗑</button>
       <button class="genbtn" id="genbtn" onclick="genSelected()">
         ✦ Générer (<span id="selcnt">0</span>)
       </button>

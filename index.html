@@ -1184,8 +1184,10 @@ function unarchiveResult(id){
 // ── BADGE
 function updBadge(){
   const active=results.filter(r=>!archived.has(r.id));
-  const n=active.filter(r=>r._new).length;
-  const b=document.getElementById('tbadge'); b.textContent=n; b.classList.toggle('show',n>0);
+  const total=active.length;
+  const b=document.getElementById('tbadge');
+  b.textContent=total;
+  b.classList.toggle('show',total>0);
 }
 
 // ── RENDER READY

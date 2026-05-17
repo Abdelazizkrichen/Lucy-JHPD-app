@@ -889,7 +889,7 @@ async function scrape() {
   try {
     // Pas de CV → impossible de chercher
     if (!cvTxt) {
-      toast('Uploadez votre CV d'abord pour obtenir des offres adaptées','err');
+      toast('Uploadez votre CV pour obtenir des offres adaptées','err');
       btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher';
       return;
     }
@@ -902,7 +902,7 @@ async function scrape() {
     // Vérifier qu'on a bien des keywords
     const kw = userProfile?.keywords_recherche;
     if (!kw || !kw.length) {
-      toast('Impossible d'extraire les mots-clés du CV — vérifiez votre clé Groq','err');
+      toast('Impossible d\'extraire les mots-clés du CV — vérifiez votre clé Groq','err');
       btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher';
       return;
     }

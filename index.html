@@ -457,6 +457,9 @@ input[type=file]{display:none}
       <label>Clé API Groq <a href="https://console.groq.com/keys" target="_blank">→ Obtenir gratuitement</a></label>
       <input type="password" id="mkey" placeholder="gsk_..." oninput="chkModal()">
       <div class="guide">① Créez un compte sur console.groq.com → ② Menu "API Keys" → ③ "Create API key" → ④ Copiez la clé ici</div>
+      <div style="margin-top:6px;padding:8px 10px;background:rgba(255,79,109,.06);border:1px solid rgba(255,79,109,.2);border-radius:6px;font-size:10px;color:var(--r);line-height:1.7">
+        ⚠ <strong>Clé personnelle obligatoire</strong> — Ne partagez jamais votre clé. Chaque utilisateur doit créer la sienne gratuitement sur <a href="https://console.groq.com/keys" target="_blank" style="color:var(--r)">console.groq.com</a>
+      </div>
       <div style="margin-top:6px;padding:8px 10px;background:rgba(255,184,0,.08);border:1px solid rgba(255,184,0,.25);border-radius:6px;font-size:10px;color:var(--y);line-height:1.7">⚠ <strong>Free tier Groq</strong> — 30 req/min · Génération séquentielle · Retry automatique si limite atteinte<br>Volume illimité → <a href="https://console.groq.com/settings/billing" target="_blank" style="color:var(--y);text-decoration:underline">passer en payant</a></div>
     </div>
 
@@ -708,6 +711,8 @@ function doLogout() {
   // Reset état local immédiatement (ne pas attendre signOut)
   gkey=''; cvTxt=''; cvB64=''; gmailUser=''; gmailPass=''; userProfile=null;
   jobs=[]; results=[]; statuses={}; archived=new Set(); sel=new Set(); doneSet=new Set(); genSet=new Set();
+  // Effacer TOUT le localStorage
+  ['lj_k','lj_cv','lj_b','lj_gm','lj_gp','lj_j','lj_r','lj_st','lj_arch','lj_profile','lj_last_email'].forEach(k=>localStorage.removeItem(k));
   currentUser=null;
   // UI → retour login
   document.getElementById('userDot').style.display='none';
@@ -736,6 +741,15 @@ async function loadUserData() {
       if (p.gmail_user) { gmailUser=p.gmail_user; localStorage.setItem('lj_gm',gmailUser); }
       if (p.gmail_pass) { gmailPass=p.gmail_pass; localStorage.setItem('lj_gp',gmailPass); }
       if (p.cv_text)    { cvTxt=p.cv_text;        localStorage.setItem('lj_cv',cvTxt); }
+      if (p.user_profile) {
+        try {
+          userProfile = JSON.parse(p.user_profile);
+          localStorage.setItem('lj_profile', p.user_profile);
+        } catch {}
+      } else {
+        // Pas de profil en base → reset local pour forcer ré-extraction
+        userProfile=null; localStorage.removeItem('lj_profile');
+      }
     } else {
       // Nouveau compte (ex: Google) → syncer les données locales existantes vers Supabase
       if (gkey || cvTxt) {
@@ -761,7 +775,17 @@ async function loadUserData() {
 
 async function syncProfile() {
   if (!sbClient||!currentUser) return;
-  try { await sbClient.from('profiles').upsert({id:currentUser.id,groq_key:gkey,gmail_user:gmailUser,gmail_pass:gmailPass,cv_text:cvTxt,updated_at:new Date().toISOString()}); } catch {}
+  try {
+    await sbClient.from('profiles').upsert({
+      id:currentUser.id,
+      groq_key:gkey,
+      gmail_user:gmailUser,
+      gmail_pass:gmailPass,
+      cv_text:cvTxt,
+      user_profile:userProfile ? JSON.stringify(userProfile) : null,
+      updated_at:new Date().toISOString()
+    });
+  } catch {}
 }
 
 async function syncResult(r) {
@@ -857,12 +881,14 @@ async function extractPdf(file) {
       document.getElementById('pbari').style.width=(i/total*100)+'%';
     }
     cvTxt=txt.trim(); localStorage.setItem('lj_cv',cvTxt);
+    // Reset profil — nouveau CV = nouveaux keywords obligatoires
+    userProfile=null; localStorage.removeItem('lj_profile');
     document.getElementById('cvdh').textContent='✓ '+file.name;
     document.getElementById('cvds').textContent=cvTxt.length+' caractères extraits';
     document.getElementById('cvdrop').classList.add('ok');
     document.getElementById('pbar').classList.remove('show');
     chkModal(); toast('CV extrait ('+cvTxt.length+' car.)','ok');
-    if(gkey&&!userProfile) extractProfile();
+    if(gkey) extractProfile();
   } catch(e) { document.getElementById('cvds').textContent='Erreur: '+e.message; toast('Erreur extraction PDF','err'); }
 }
 
@@ -1047,9 +1073,12 @@ function setChip(f,el){ filter=f; document.querySelectorAll('.chip').forEach(c=>
 // ── RESET JOBS
 function confirmReset(){ document.getElementById('resetov').classList.remove('hide'); }
 function doReset(){
-  jobs=[]; sel.clear(); localStorage.setItem('lj_j','[]');
+  jobs=[]; sel.clear();
+  userProfile=null;
+  localStorage.setItem('lj_j','[]');
+  localStorage.removeItem('lj_profile');
   document.getElementById('resetov').classList.add('hide');
-  render(); toast('Offres vidées','ok');
+  render(); toast('Offres vidées — relancez une recherche','ok');
 }
 
 // ── GENERATE

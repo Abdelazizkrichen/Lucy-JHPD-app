@@ -1184,8 +1184,12 @@ async function extractProfile() {
     localStorage.setItem('lj_profile',JSON.stringify(userProfile));
     toast('Profil extrait : '+userProfile.nom_complet,'ok');
     if(!isDemo) syncProfile();
-  } catch(e) { console.warn('extractProfile:',e); }
-  finally { if(!_prevKey) gkey = ''; }
+  } catch(e) {
+    console.error('extractProfile error:', e);
+    if(!_prevKey) gkey = '';
+    throw e; // propager pour que scrape() voie l'erreur réelle
+  }
+  if(!_prevKey) gkey = '';
 }
 async function scrape() {
   const btn=document.getElementById('scrpbtn'), sp=document.getElementById('scrpsp'), txt=document.getElementById('scrptxt');
@@ -1207,7 +1211,8 @@ async function scrape() {
     // Vérifier qu'on a bien des keywords
     const kw = userProfile?.keywords_recherche;
     if (!kw || !kw.length) {
-      toast('Extraction CV échouée — vérifiez votre clé Groq ou reconnectez-vous','err');
+      // Ne devrait pas arriver ici (extractProfile aurait dû throw)
+      toast('Profil non extrait — relancez la recherche','err');
       btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher';
       return;
     }
@@ -1227,7 +1232,19 @@ async function scrape() {
       toast('Mode démo · 10 offres affichées · Connectez-vous pour tout voir','info');
     localStorage.setItem('lj_j',JSON.stringify(jobs));
     render(); toast(added+' offres adaptées à votre profil','ok'); autoScore();
-  } catch(e) { toast('Erreur: '+e.message,'err'); }
+  } catch(e) {
+    console.error('scrape error:', e);
+    // Erreur Groq spécifique
+    if(e.message && e.message.includes('429')) {
+      toast('Groq rate limit — attendez 1 minute puis relancez','err');
+    } else if(e.message && e.message.includes('401')) {
+      toast('Clé Groq invalide ou expirée','err');
+    } else if(e.message && e.message.includes('clé')) {
+      toast(e.message,'err');
+    } else {
+      toast('Erreur extraction: '+e.message,'err');
+    }
+  }
   finally { btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher'; }
 }
 

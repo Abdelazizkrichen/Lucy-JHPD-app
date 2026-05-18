@@ -739,8 +739,7 @@ async function extractPdf2(file) {
     let txt=''; const total=pdf.numPages;
     for(let i=1;i<=total;i++){
       const pg=await pdf.getPage(i); const c=await pg.getTextContent();
-      txt+=c.items.map(s=>s.str).join(' ')+'
-';
+      txt+=c.items.map(s=>s.str).join(' ')+'\n';
       document.getElementById('pbari2').style.width=(i/total*100)+'%';
     }
     cvTxt=txt.trim(); localStorage.setItem('lj_cv',cvTxt);
@@ -760,7 +759,7 @@ async function extractPdf2(file) {
 
 // Lancer en mode démo (sans login)
 async function startDemo() {
-  if (!cvTxt) { toast('Uploadez votre CV d'abord','err'); return; }
+  if (!cvTxt) { toast('Uploadez votre CV d\'abord','err'); return; }
   const btn=document.getElementById('startBtn'), sp=document.getElementById('startSp');
   btn.disabled=true; sp.classList.add('on');
   isDemo=true;

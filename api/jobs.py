@@ -1,5 +1,8 @@
-"""Lucy — Job scraping (Vercel) — keywords dynamiques depuis le CV utilisateur"""
-import json, urllib.request, urllib.parse, ssl, time, gzip
+"""Lucy — Job scraping (Vercel)
+Sources légales: France Travail (API officielle) + Adzuna (API officielle)
+               + APEC (API publique organisme paritaire) + Indeed RSS + Cadremploi RSS
+"""
+import json, urllib.request, urllib.parse, ssl, time, gzip, re
 from http.server import BaseHTTPRequestHandler
 
 SSL = ssl.create_default_context()
@@ -11,23 +14,26 @@ FT_APP = "PAR_lucyjobhunter_b4ed148e50022211273f40b6f755af73ece7c4b284eb27ed260e
 FT_SEC = "9270acaa586d9a752533dc92163a1c127c976eddd5ad9aa6f889759d1e68e62b"
 AZ_ID  = "cbe5b72d"
 AZ_KEY = "74845cedd88ff4283ce7ec02f573d733"
-WJ_APP = "CZMSE9B1IT"
-WJ_KEY = "bcca6f7f1a413c65bac9cc5dff4ceac8"
 UA     = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/121.0 Safari/537.36"
 
-# Pas de fallback — keywords obligatoires depuis le CV utilisateur
+FT_CONTRACT = {"CDI":"CDI","CDD":"CDD","freelance":"MIS","stage":"STA","alternance":"CTA","professionalisation":"CPI","POEI":"CDI"}
+AZ_CONTRACT = {"CDI":"permanent","CDD":"contract","freelance":"contract","stage":"internship","alternance":"apprenticeship","professionalisation":"apprenticeship","POEI":"permanent"}
 
 _ft_cache = {"tok": None, "exp": 0}
 
 def fetch(url, hdrs=None, data=None, timeout=12):
     req = urllib.request.Request(url, data=data, method="POST" if data else "GET")
     req.add_header("User-Agent", UA)
-    req.add_header("Accept-Encoding","gzip")
+    req.add_header("Accept-Encoding", "gzip")
+    req.add_header("Accept-Language", "fr-FR,fr;q=0.9")
     for k,v in (hdrs or {}).items(): req.add_header(k,v)
     with urllib.request.urlopen(req, timeout=timeout, context=SSL) as r:
         raw = r.read()
     try: return gzip.decompress(raw).decode("utf-8","ignore")
     except: return raw.decode("utf-8","ignore")
+
+def strip_html(s):
+    return re.sub(r'\s+',' ', re.sub(r'<[^>]+>','',s)).strip()
 
 def ft_token():
     if _ft_cache["tok"] and time.time() < _ft_cache["exp"]: return _ft_cache["tok"]
@@ -37,7 +43,7 @@ def ft_token():
     _ft_cache["exp"] = time.time() + r.get("expires_in",1200) - 60
     return _ft_cache["tok"]
 
-def scrape_ft(keywords):
+def scrape_ft(keywords, contracts):
     from datetime import datetime, timedelta
     now = datetime.utcnow()
     mn = (now-timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -45,53 +51,95 @@ def scrape_ft(keywords):
     jobs, seen = [], set()
     try:
         tok = ft_token()
-        for kw in keywords[:4]:  # max 4 pour FT
-            kw_enc = urllib.parse.quote(kw)
-            url = f"https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search?motsCles={kw_enc}&region=11&typeContrat=CDI&range=0-9&minCreationDate={mn}&maxCreationDate={mx}"
-            d = json.loads(fetch(url,{"Authorization":f"Bearer {tok}","Accept":"application/json"}))
-            for o in d.get("resultats",[]):
-                jid = "ft_"+o["id"]
-                if jid in seen: continue
-                seen.add(jid)
-                jobs.append({"id":jid,"title":o.get("intitule",""),"company":o.get("entreprise",{}).get("nom","Confidentiel"),"location":o.get("lieuTravail",{}).get("libelle","IDF"),"salary":o.get("salaire",{}).get("commentaire") or o.get("salaire",{}).get("libelle","Non précisé"),"description":o.get("description","")[:800],"link":f"https://candidat.francetravail.fr/offres/recherche/detail/{o['id']}","source":"France Travail","date":o.get("dateCreation","")})
+        ft_types = list({FT_CONTRACT[c] for c in contracts if c in FT_CONTRACT}) or ["CDI"]
+        for kw in keywords[:3]:
+            for ct in ft_types[:2]:
+                url = (f"https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
+                       f"?motsCles={urllib.parse.quote(kw)}&region=11&typeContrat={ct}"
+                       f"&range=0-9&minCreationDate={mn}&maxCreationDate={mx}")
+                d = json.loads(fetch(url,{"Authorization":f"Bearer {tok}","Accept":"application/json"}))
+                for o in d.get("resultats",[]):
+                    jid = "ft_"+o["id"]
+                    if jid in seen: continue
+                    seen.add(jid)
+                    jobs.append({"id":jid,"title":o.get("intitule",""),"company":o.get("entreprise",{}).get("nom","Confidentiel"),"location":o.get("lieuTravail",{}).get("libelle","IDF"),"salary":o.get("salaire",{}).get("commentaire") or o.get("salaire",{}).get("libelle","Non précisé"),"description":o.get("description","")[:800],"link":f"https://candidat.francetravail.fr/offres/recherche/detail/{o['id']}","source":"France Travail","date":o.get("dateCreation",""),"contract":o.get("typeContratLibelle",ct)})
     except Exception as e: print(f"[FT] {e}")
     return jobs
 
-def scrape_adzuna(keywords):
+def scrape_adzuna(keywords, contracts):
     jobs, seen = [], set()
     try:
-        for kw in keywords[:3]:  # max 3 pour Adzuna
-            kw_enc = urllib.parse.quote_plus(kw)
-            url = f"https://api.adzuna.com/v1/api/jobs/fr/search/1?app_id={AZ_ID}&app_key={AZ_KEY}&results_per_page=10&what={kw_enc}&where=Ile-de-France&distance=30&max_days_old=5&sort_by=date&content-type=application/json"
+        for kw in keywords[:3]:
+            url = (f"https://api.adzuna.com/v1/api/jobs/fr/search/1?app_id={AZ_ID}&app_key={AZ_KEY}"
+                   f"&results_per_page=10&what={urllib.parse.quote_plus(kw)}"
+                   f"&where=Ile-de-France&distance=30&max_days_old=5&sort_by=date&content-type=application/json")
             d = json.loads(fetch(url))
             for j in d.get("results",[]):
                 t=j.get("title",""); co=j.get("company",{}).get("display_name","")
-                raw=(t+co).lower().replace(" ","")[:24]
-                jid="az_"+''.join(c for c in raw if c.isalnum())
+                jid="az_"+"".join(c for c in (t+co).lower().replace(" ","")[:24] if c.isalnum())
                 if jid in seen: continue
                 seen.add(jid)
                 sm,sx=j.get("salary_min"),j.get("salary_max")
-                sal=f"{round(sm/1000)}k-{round(sx/1000)}k€" if sm and sx else "Non précisé"
-                jobs.append({"id":jid,"title":t,"company":co,"location":j.get("location",{}).get("display_name","IDF"),"salary":sal,"description":j.get("description","")[:800],"link":j.get("redirect_url",""),"source":"Adzuna","date":j.get("created","")})
+                jobs.append({"id":jid,"title":t,"company":co,"location":j.get("location",{}).get("display_name","IDF"),"salary":f"{round(sm/1000)}k-{round(sx/1000)}k€" if sm and sx else "Non précisé","description":j.get("description","")[:800],"link":j.get("redirect_url",""),"source":"Adzuna","date":j.get("created",""),"contract":contracts[0] if contracts else "CDI"})
     except Exception as e: print(f"[Adzuna] {e}")
     return jobs
 
-def scrape_wttj(keywords):
+def scrape_apec(keywords, contracts):
+    """APEC — organisme paritaire public, API JSON non authentifiée"""
     jobs, seen = [], set()
     try:
-        for kw in keywords[:3]:  # max 3 pour WTTJ
-            payload = json.dumps({"requests":[{"indexName":"wttj-jobs-production","params":urllib.parse.urlencode({"query":kw,"filters":"contract_type:CDI AND offices.country_code:FR","hitsPerPage":8,"attributesToRetrieve":"objectID,name,company,published_at,offices,salary_min,salary_max,description,slug"})}]}).encode()
-            d = json.loads(fetch(f"https://{WJ_APP.lower()}-dsn.algolia.net/1/indexes/*/queries",{"Content-Type":"application/json","X-Algolia-Application-Id":WJ_APP,"X-Algolia-API-Key":WJ_KEY},payload))
-            for h in d.get("results",[{}])[0].get("hits",[]):
-                jid="wttj_"+str(h.get("objectID",""))
+        for kw in keywords[:3]:
+            url = (f"https://www.apec.fr/cms/webservices/rechercheOffre/results"
+                   f"?motsCles={urllib.parse.quote_plus(kw)}&lieu=IDF&nbParPage=10&page=0&tri=1")
+            text = fetch(url, {"Accept":"application/json","X-Requested-With":"XMLHttpRequest","Referer":"https://www.apec.fr/candidat/recherche-emploi.html"})
+            data = json.loads(text)
+            resultats = data.get("resultats") or data.get("data") or data.get("offres") or []
+            for o in resultats:
+                num = str(o.get("numeroOffre") or o.get("numOffre") or o.get("id") or "")
+                if not num: continue
+                jid = "apec_"+num
                 if jid in seen: continue
                 seen.add(jid)
-                co=h.get("company",{}); cn=co.get("name","Confidentiel") if isinstance(co,dict) else str(co); cs=co.get("slug","") if isinstance(co,dict) else ""
-                of=(h.get("offices",[]) or [h.get("office",{})])[0]; loc=(of.get("city","") if isinstance(of,dict) else "") or "France"
-                sm,sx=h.get("salary_min"),h.get("salary_max"); sal=f"{round(sm/1000)}k-{round(sx/1000)}k€" if sm and sx else "Non précisé"
-                sl=h.get("slug",""); lnk=f"https://www.welcometothejungle.com/fr/companies/{cs}/jobs/{sl}" if cs and sl else "https://www.welcometothejungle.com"
-                jobs.append({"id":jid,"title":h.get("name",""),"company":cn,"location":loc,"salary":sal,"description":str(h.get("description",""))[:800],"link":lnk,"source":"WTTJ","date":h.get("published_at","")})
-    except Exception as e: print(f"[WTTJ] {e}")
+                lieu = o.get("lieuTravail") or o.get("lieu") or {}
+                loc = (lieu.get("libelle","IDF") if isinstance(lieu,dict) else str(lieu)) or "IDF"
+                co = o.get("entreprise",{})
+                company = o.get("nomEntreprise") or (co.get("nom") if isinstance(co,dict) else str(co)) or "Confidentiel"
+                jobs.append({"id":jid,"title":o.get("intitule") or o.get("titre") or "","company":company,"location":loc,"salary":o.get("salaireTexte") or "Non précisé","description":str(o.get("texteOffre") or o.get("description") or o.get("accroche") or "")[:800],"link":f"https://www.apec.fr/candidat/recherche-emploi.html/emploi/{num}","source":"APEC","date":o.get("datePublication") or ""})
+    except Exception as e: print(f"[APEC] {e}")
+    return jobs
+
+def scrape_rss(keywords, contracts):
+    """Indeed RSS + Cadremploi RSS — flux publics officiels"""
+    jobs, seen = [], set()
+
+    rss_sources = []
+    for kw in keywords[:2]:
+        kw_enc = urllib.parse.quote_plus(kw)
+        rss_sources += [
+            (f"https://fr.indeed.com/rss?q={kw_enc}&l=Ile-de-France&sort=date", "Indeed"),
+            (f"https://www.cadremploi.fr/api/offres/search?q={kw_enc}&l=idf&format=rss", "Cadremploi"),
+        ]
+
+    for url, source in rss_sources:
+        try:
+            xml = fetch(url, {"Accept":"application/rss+xml,application/xml,text/xml"})
+            items = re.findall(r'<item>(.*?)</item>', xml, re.DOTALL)
+            for item in items[:8]:
+                def tag(t): m=re.search(f'<{t}[^>]*><!\\[CDATA\\[(.*?)\\]\\]></{t}>',item,re.DOTALL); return m.group(1).strip() if m else (re.search(f'<{t}[^>]*>(.*?)</{t}>',item,re.DOTALL) or type('',(),{'group':lambda s,x:''})()).group(1).strip()
+                title   = tag('title')
+                link    = tag('link') or re.search(r'<link>(.*?)</link>',item,re.DOTALL)
+                link    = link.group(1).strip() if hasattr(link,'group') else (link or '')
+                desc    = strip_html(tag('description'))[:800]
+                company = tag('source') or tag('company') or "Confidentiel"
+                date    = tag('pubDate') or tag('dc:date') or ""
+                if not title: continue
+                raw = (title+company).lower().replace(" ","")[:24]
+                jid = source.lower()+"_"+"".join(c for c in raw if c.isalnum())
+                if jid in seen: continue
+                seen.add(jid)
+                jobs.append({"id":jid,"title":title,"company":company,"location":"IDF","salary":"Non précisé","description":desc,"link":link,"source":source,"date":date,"contract":contracts[0] if contracts else "CDI"})
+        except Exception as e: print(f"[RSS {source}] {e}")
+
     return jobs
 
 class handler(BaseHTTPRequestHandler):
@@ -104,22 +152,19 @@ class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200); self._cors(); self.end_headers()
     def _run(self):
-        # Lire les mots-clés depuis query string ?kw=mot1,mot2,mot3
         qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-        kw_param = qs.get('kw',[''])[0]
-        keywords = [k.strip() for k in kw_param.split(',') if k.strip()]
+        keywords  = [k.strip() for k in qs.get("kw",[""])[0].split(",") if k.strip()]
+        contracts = [c.strip() for c in qs.get("ct",["CDI"])[0].split(",") if c.strip()] or ["CDI"]
         if not keywords:
-            # Pas de keywords = pas de CV analysé → erreur explicite
-            self._json({"jobs":[],"total":0,"error":"Aucun mot-clé fourni — uploadez votre CV d'abord"})
-            return
-        print(f"[Scraping] keywords: {keywords}")
+            self._json({"jobs":[],"total":0,"error":"Aucun mot-clé — uploadez votre CV"}); return
+        print(f"[Scraping] kw={keywords} ct={contracts}")
         jobs, seen = [], set()
-        for fn in [scrape_ft, scrape_adzuna, scrape_wttj]:
+        for fn in [scrape_ft, scrape_adzuna, scrape_apec, scrape_rss]:
             try:
-                for j in fn(keywords):
+                for j in fn(keywords, contracts):
                     if j["id"] not in seen: seen.add(j["id"]); jobs.append(j)
-            except Exception as e: print(f"[Error] {e}")
-        print(f"[Done] {len(jobs)} offres")
+            except Exception as e: print(f"[Error] {fn.__name__}: {e}")
+        print(f"[Done] {len(jobs)} offres — FT+Adzuna+APEC+Indeed+Cadremploi")
         self._json({"jobs":jobs,"total":len(jobs)})
     def do_GET(self): self._run()
     def do_POST(self): self._run()

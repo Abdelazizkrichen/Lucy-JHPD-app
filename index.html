@@ -374,7 +374,6 @@ input[type=file]{display:none}
     <div class="tab" id="tabArch"  onclick="showTab('arch')">📦 Archives</div>
     <div class="tab" id="tabStats" onclick="showTab('stats')">📊 Stats</div>
     <div class="tsp"></div>
-    <div class="tab" id="tabLucy" onclick="showTab('lucy')">💬 Lucy IA</div>
   </div>
 
   <div class="view on" id="viewJobs">
@@ -418,28 +417,6 @@ input[type=file]{display:none}
     <div class="list-scroll" id="readyList"></div>
   </div>
 
-  <!-- LUCY IA -->
-  <div class="view" id="viewLucy">
-    <div class="list-scroll" id="lucyContent" style="display:flex;flex-direction:column;gap:12px">
-      <div style="background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:16px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="font-size:20px">✦</span>
-          <div>
-            <strong style="font-size:13px">Lucy — Career Manager IA</strong>
-            <p style="font-size:11px;color:var(--m);margin-top:2px">Collez une offre d'emploi (texte, URL ou PDF) pour obtenir une analyse, une lettre et un CV adapté</p>
-          </div>
-        </div>
-        <textarea id="lucyInput" placeholder="Collez ici le texte de l'offre, une URL ou décrivez le poste..." style="width:100%;padding:12px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:12px;line-height:1.7;resize:none;outline:none;min-height:120px;transition:border-color .2s" onfocus="this.style.borderColor='var(--a)'" onblur="this.style.borderColor='var(--b)'"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-          <button onclick="lucyAnalyze()" id="lucyBtn" style="padding:8px 18px;border-radius:7px;border:none;background:var(--a);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
-            <span id="lucySp" class="sp"></span>✦ Analyser avec Lucy
-          </button>
-          <button onclick="document.getElementById('lucyInput').value='';document.getElementById('lucyResult').innerHTML=''" style="padding:8px 12px;border-radius:7px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer">Effacer</button>
-        </div>
-      </div>
-      <div id="lucyResult"></div>
-    </div>
-  </div>
 
   <!-- ARCHIVES -->
   <div class="view" id="viewArch">
@@ -486,6 +463,11 @@ input[type=file]{display:none}
       <button class="mbtn s" onclick="document.getElementById('resetov').classList.add('hide')">Annuler</button>
     </div>
   </div>
+</div>
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <div style="width:48px;height:48px;border:3px solid rgba(108,99,255,.3);border-top-color:var(--a);border-radius:50%;animation:spi .8s linear infinite"></div>
+  <div id="loadingMsg" style="color:#fff;font-family:'Space Mono',monospace;font-size:13px;text-align:center;max-width:280px;line-height:1.7"></div>
 </div>
 
 <!-- ÉCRAN D'ACCUEIL (démo + login) -->
@@ -689,9 +671,40 @@ input[type=file]{display:none}
       <p style="margin-bottom:10px"><strong style="color:var(--t)">Vos données restent chez vous.</strong><br>CV, clés API, lettres générées : tout est stocké dans votre navigateur (localStorage). Rien n'est envoyé à nos serveurs.</p>
       <p style="margin-bottom:10px"><strong style="color:var(--t)">Envoi email en construction.</strong><br>L'envoi direct au recruteur sera disponible dans une prochaine version. Pour l'instant, envoyez à votre propre adresse pour vérifier.</p>
       <p style="margin-bottom:10px"><strong style="color:var(--t)">Clés API nécessaires.</strong><br>Groq (IA) est obligatoire. France Travail + Adzuna sont optionnels mais recommandés pour avoir des offres. Toutes les inscriptions sont gratuites.</p>
-      <p><strong style="color:var(--t)">Offres IDF uniquement.</strong><br>Cette version scrape Île-de-France. Les mots-clés sont orientés Product Owner / AMOA.</p>
+      <p><strong style="color:var(--t)">Offres IDF uniquement.</strong><br>Cette version scrape Île-de-France.</p>
     </div>
     <div class="mrow"><button class="mbtn p" onclick="document.getElementById('betaov').classList.add('hide')">Compris →</button></div>
+  </div>
+</div>
+
+<!-- LUCY FLOATING BUBBLE -->
+<button id="lucyBubble" onclick="toggleLucyPanel()"
+  style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:var(--a);border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 20px rgba(108,99,255,.4);z-index:250;display:flex;align-items:center;justify-content:center;transition:transform .2s"
+  onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"
+  title="Lucy Career Manager IA">
+  💬
+  <span id="lucyBubbleDot" style="position:absolute;top:4px;right:4px;width:10px;height:10px;background:#00d68f;border-radius:50%;border:2px solid var(--a);display:none"></span>
+</button>
+
+<!-- LUCY PANEL -->
+<div id="lucyPanel" style="display:none;position:fixed;bottom:90px;right:24px;width:min(420px,calc(100vw - 32px));max-height:80vh;background:var(--s1);border:1px solid var(--b);border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.3);z-index:249;flex-direction:column;overflow:hidden">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--b);background:var(--s1)">
+    <span style="font-size:16px">✦</span>
+    <div>
+      <strong style="font-size:12px;color:var(--a)">Lucy Career Manager</strong>
+      <p style="font-size:10px;color:var(--m);margin-top:1px">Collez une offre pour une analyse complète</p>
+    </div>
+    <button onclick="toggleLucyPanel()" style="margin-left:auto;background:none;border:none;color:var(--m);cursor:pointer;font-size:18px;padding:4px 8px">✕</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:12px;max-height:calc(80vh - 130px)">
+    <textarea id="lucyInput" placeholder="Collez ici le texte de l'offre, une URL ou décrivez le poste..." style="width:100%;padding:10px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:12px;line-height:1.6;resize:none;outline:none;min-height:90px;box-sizing:border-box" onfocus="this.style.borderColor='var(--a)'" onblur="this.style.borderColor='var(--b)'"></textarea>
+    <div id="lucyResult" style="margin-top:10px"></div>
+  </div>
+  <div style="padding:10px 12px;border-top:1px solid var(--b);display:flex;gap:8px">
+    <button onclick="lucyAnalyze()" id="lucyBtn" style="flex:1;padding:9px;border-radius:7px;border:none;background:var(--a);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+      <span id="lucySp" class="sp"></span>✦ Analyser
+    </button>
+    <button onclick="document.getElementById('lucyInput').value='';document.getElementById('lucyResult').innerHTML='';window._lucyCV=null;" style="padding:9px 12px;border-radius:7px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer">✕</button>
   </div>
 </div>
 
@@ -899,9 +912,9 @@ function startDemo() {
   document.getElementById('loginov').classList.add('hide');
   document.getElementById('demoBanner').style.display = 'flex';
   // En démo: on peut utiliser si CV uploadé sinon on ouvre config
-  // Onglet Lucy : visible seulement si connecté
-  const lucyTab = document.getElementById('tabLucy');
-  if(lucyTab) lucyTab.style.display = 'flex'; // visible toujours (démo = analyse OK, pas de sauvegarde)
+  // Lucy : bulle flottante — toujours visible
+  const lucyBubble = document.getElementById('lucyBubble');
+  if(lucyBubble) lucyBubble.style.display = 'flex';
   // En mode démo : clé démo fournie par serveur, pas besoin de config
   const hasKey = gkey || (isDemo && window._groqDemoKey);
   if (!hasKey || !cvTxt) {
@@ -1032,6 +1045,15 @@ async function syncResult(r) {
 }
 
 // ── INIT
+
+function showLoading(msg) {
+  const el = document.getElementById('loadingOverlay');
+  if (el) { el.style.display='flex'; document.getElementById('loadingMsg').textContent=msg||''; }
+}
+function hideLoading() {
+  const el = document.getElementById('loadingOverlay');
+  if (el) el.style.display='none';
+}
 
 function toggleTheme() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -1178,7 +1200,7 @@ async function extractProfile() {
   const _prevKey = gkey;
   if(!gkey && key) gkey = key;
   try {
-    const prompt = 'Analyse ce CV et extrais les informations. JSON uniquement, sans backticks.\nFormat:\n{"nom_complet":"Prénom NOM","titre":"Titre principal","telephone":"0600000000","email":"email@domaine.com","linkedin":"linkedin.com/in/profil","localisation":"Ville","disponibilite":"Immédiate","certifications":["cert1"],"langues":"Français : Courant","keywords_recherche":["intitule1","intitule2","intitule3"]}\n\nPour keywords_recherche: 3-5 intitulés de poste courts en français adaptés au profil (ex: développeur fullstack, data scientist, chef de projet...).\n\nCV:\n'+cvTxt.substring(0,3000);
+    const prompt = 'Analyse ce CV et extrais les informations. JSON uniquement, sans backticks, sans commentaires.\n\nFormat STRICT:\n{"nom_complet":"Prénom NOM","titre":"Titre professionnel principal","telephone":"","email":"","linkedin":"","localisation":"Ville","disponibilite":"Immédiate","certifications":[],"langues":"","keywords_recherche":["kw1","kw2","kw3"]}\n\nRègle absolue pour keywords_recherche:\n- Lire TOUT le CV avant de répondre\n- Extraire 3 à 5 intitulés de poste RÉELS présents dans ce CV spécifique\n- NE JAMAIS inventer ou généraliser — utiliser uniquement ce qui est écrit\n- Si le CV contient "Ingénieur Réseau" → mettre "Ingénieur Réseau"\n- Si le CV contient "Data Scientist" → mettre "Data Scientist"\n- Si le CV contient "Chef de Projet MOA" → mettre "Chef de Projet MOA"\n\nCV COMPLET:\n'+cvTxt;
     const raw=await groq([{role:'user',content:prompt}],400,0);
     userProfile=JSON.parse(raw.replace(/```json|```/g,'').trim());
     // Si keywords_recherche absent → le dériver du titre et du CV
@@ -1205,6 +1227,7 @@ async function extractProfile() {
 async function scrape() {
   const btn=document.getElementById('scrpbtn'), sp=document.getElementById('scrpsp'), txt=document.getElementById('scrptxt');
   btn.disabled=true; sp.classList.add('on');
+  showLoading('Initialisation...');
 
   try {
     // Pas de CV → impossible de chercher
@@ -1217,24 +1240,15 @@ async function scrape() {
     const hasGroqKey = gkey || (isDemo && (window._groqDemoKey || true));
     if (!userProfile?.keywords_recherche?.length && hasGroqKey) {
       txt.textContent='Analyse du CV...';
-      toast('Extraction des mots-clés de votre CV...','info');
+      showLoading('✦ Lucy analyse votre CV...\nExtraction des mots-clés de votre profil');
       await extractProfile();
     }
     // Vérifier qu'on a bien des keywords
     const kw = userProfile?.keywords_recherche;
     if (!kw || !kw.length) {
-      // Dernier recours : extraire les intitulés depuis les premières lignes du CV
-      const cvLines = cvTxt.split('\n').map(l=>l.trim()).filter(l=>l.length>8 && l.length<80);
-      const jobTerms = ['ingénieur','développeur','chef de projet','product owner','manager','consultant','analyste','architecte','technicien','responsable','directeur','lead'];
-      const topWords = [];
-      for (const line of cvLines.slice(0,20)) {
-        const low = line.toLowerCase();
-        if (jobTerms.some(t=>low.includes(t)) && topWords.length < 4) {
-          topWords.push(line.substring(0,60).trim());
-        }
-      }
-      // Si toujours rien → 3 premières lignes du CV
-      if (!topWords.length) cvLines.slice(0,3).forEach(l=>topWords.push(l));
+      // Dernier recours : prendre les 5 premières lignes non vides du CV (titre, poste, etc.)
+      const cvLines = cvTxt.split('\n').map(l=>l.trim()).filter(l=>l.length>5 && l.length<100);
+      const topWords = cvLines.slice(0,5);
       if (topWords.length) {
         toast('Mots-clés extraits du CV : '+topWords.slice(0,3).join(', '),'info');
         const ctsFb = selectedContracts.length > 0 ? selectedContracts.join(',') : 'CDI,CDD,freelance,stage,alternance,professionalisation,POEI';
@@ -1280,7 +1294,7 @@ async function scrape() {
       toast('Erreur extraction: '+e.message,'err');
     }
   }
-  finally { btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher'; }
+  finally { hideLoading(); btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher'; }
 }
 
 // ── ATS SCORE
@@ -1897,6 +1911,7 @@ Génère un CV ATS-optimisé. Respecte exactement ces balises :
         </div>
       </div>`;
     toast('✦ Analyse Lucy prête','ok');
+    const _dot=document.getElementById('lucyBubbleDot'); if(_dot) _dot.style.display='block';
   } catch(e) {
     document.getElementById('lucyResult').innerHTML = `<div style="color:var(--r);font-size:12px;padding:12px">${e.message}</div>`;
     toast('Erreur: '+e.message,'err');
@@ -2061,9 +2076,19 @@ async function sendToLucy(){
 function lucyPrompt(msg){ document.getElementById('lucyInput').value=msg; sendToLucy(); }
 
 // ── TABS
+function toggleLucyPanel() {
+  const panel = document.getElementById('lucyPanel');
+  const dot   = document.getElementById('lucyBubbleDot');
+  if (!panel) return;
+  const visible = panel.style.display === 'flex';
+  panel.style.display = visible ? 'none' : 'flex';
+  panel.style.flexDirection = 'column';
+  if (!visible && dot) dot.style.display = 'none'; // reset notif dot
+}
+
 function showTab(t){
   activeTab=t;
-  ['jobs','ready','arch','stats','lucy'].forEach(v=>{
+  ['jobs','ready','arch','stats'].forEach(v=>{
     const cap=v.charAt(0).toUpperCase()+v.slice(1);
     document.getElementById('view'+cap)?.classList.toggle('on',v===t);
     document.getElementById('tab'+cap)?.classList.toggle('on',v===t);

@@ -248,6 +248,13 @@ header{display:flex;align-items:center;gap:12px;padding:0 20px;height:48px;borde
 .sp.on{display:inline-block}
 @keyframes spi{to{transform:rotate(360deg)}}
 input[type=file]{display:none}
+/* LUCY CHAT */
+.lucy-chip{padding:6px 12px;border-radius:16px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer;transition:all .15s;font-family:'Space Grotesk',sans-serif}
+.lucy-chip:hover{border-color:var(--a);color:var(--a);background:var(--ag)}
+.lucy-msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:12px;line-height:1.7}
+.lucy-msg.user{background:var(--a);color:#fff;align-self:flex-end;border-radius:12px 12px 4px 12px}
+.lucy-msg.ai{background:var(--s2);border:1px solid var(--b);color:var(--t);align-self:flex-start;border-radius:12px 12px 12px 4px;white-space:pre-wrap}
+.lucy-msg.ai strong{color:var(--a)}
 /* THEME TOGGLE */
 .theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--b);background:var(--s2);color:var(--m);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;flex-shrink:0}
 .theme-btn:hover{border-color:var(--a);color:var(--a)}
@@ -258,9 +265,11 @@ input[type=file]{display:none}
 [data-theme="dark"] header{box-shadow:0 1px 4px rgba(0,0,0,.06)}
 [data-theme="dark"] .tabs{box-shadow:0 1px 4px rgba(0,0,0,.04)}
 /* SOURCE COLORS */
-.jsrc.wttj{border-color:rgba(255,79,109,.3);color:#ff6b8a}
+.jsrc.ft{border-color:rgba(0,114,206,.4);color:#0072CE}
+.jsrc.adzuna{border-color:rgba(255,140,0,.3);color:#ff8c00}
 .jsrc.apec{border-color:rgba(0,214,143,.3);color:var(--g)}
-.jsrc.hw{border-color:rgba(255,184,0,.3);color:var(--y)}
+.jsrc.indeed{border-color:rgba(42,100,246,.3);color:#2a64f6}
+.jsrc.cadremploi{border-color:rgba(200,50,50,.3);color:#c83232}
 /* STATUS CHIPS */
 .status-row{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0 6px}
 .stchip{padding:3px 9px;border-radius:12px;font-size:10px;cursor:pointer;border:1px solid var(--b);background:var(--s2);color:var(--m);font-family:'Space Mono',monospace;transition:all .15s}
@@ -306,7 +315,7 @@ input[type=file]{display:none}
 .src-name{font-size:11px;font-family:'Space Mono',monospace;width:65px;flex-shrink:0}
 .src-bar{flex:1;height:7px;background:var(--s2);border-radius:4px;overflow:hidden}
 .src-fill{height:100%;border-radius:4px;transition:width .5s}
-.src-fill.wttj{background:#ff6b8a}.src-fill.apec{background:var(--g)}.src-fill.hw{background:var(--y)}
+.src-fill.ft{background:#0072CE}.src-fill.adzuna{background:#ff8c00}.src-fill.apec{background:var(--g)}.src-fill.indeed{background:#2a64f6}.src-fill.cadremploi{background:#c83232}
 .src-count{font-size:11px;color:var(--m);width:22px;text-align:right;font-family:'Space Mono',monospace}
 .score-dist{display:flex;align-items:flex-end;gap:4px;height:44px}
 .sc-bar{flex:1;background:var(--a);border-radius:3px 3px 0 0;opacity:.7;min-height:2px;transition:height .4s}
@@ -338,6 +347,17 @@ input[type=file]{display:none}
   <button class="hbtn" onclick="openSetup()">⚙ Config</button>
 </header>
 
+<div id="demoBanner" style="display:none;background:rgba(108,99,255,.1);border-bottom:1px solid rgba(108,99,255,.3);padding:8px 16px;font-size:11px;color:var(--a);display:none;align-items:center;gap:10px;flex-shrink:0">
+  <span>⚡ Mode démo — 1 génération · 10 offres · données non sauvegardées</span>
+  <div style="flex:1"></div>
+  <button onclick="document.getElementById('loginov').classList.remove('hide')" style="padding:4px 12px;border-radius:5px;border:1px solid var(--a);background:var(--a);color:#fff;font-size:10px;cursor:pointer;font-family:'Space Mono',monospace">Se connecter →</button>
+</div>
+<div class="demo-banner hide" id="demoBanner" style="background:rgba(108,99,255,.1);border-bottom:1px solid rgba(108,99,255,.3);padding:8px 20px;font-size:11px;color:var(--a);display:flex;align-items:center;gap:10px;flex-shrink:0">
+  ✦ <strong>Mode démo</strong> — 10 offres · 1 génération · Vos données non sauvegardées.
+  <span style="color:var(--t)">Connectez-vous pour accéder à toutes les fonctionnalités et sauvegarder vos candidatures.</span>
+  <div style="flex:1"></div>
+  <button onclick="document.getElementById('loginov').classList.remove('hide')" style="padding:5px 14px;border-radius:6px;border:1px solid var(--a);background:var(--a);color:#fff;font-size:11px;cursor:pointer;white-space:nowrap">Se connecter →</button>
+</div>
 <div class="beta-banner" id="betaBanner">
   <strong>⚠ Version bêta</strong> — Chaque utilisateur configure ses propres clés. Données stockées uniquement dans votre navigateur. Envoi email = test vers votre propre adresse.
   <div class="bsp"></div>
@@ -354,6 +374,7 @@ input[type=file]{display:none}
     <div class="tab" id="tabArch"  onclick="showTab('arch')">📦 Archives</div>
     <div class="tab" id="tabStats" onclick="showTab('stats')">📊 Stats</div>
     <div class="tsp"></div>
+    <div class="tab" id="tabLucy" onclick="showTab('lucy')" style="display:none">✦ Lucy IA</div>
   </div>
 
   <div class="view on" id="viewJobs">
@@ -372,6 +393,25 @@ input[type=file]{display:none}
         <option value="75" selected>Score ≥ 75%</option>
         <option value="85">Score ≥ 85%</option>
       </select>
+      <select class="scsel" id="ctsel" onchange="updateContracts()" multiple style="height:32px;min-width:90px" title="Types de contrat">
+        <option value="CDI" selected>CDI</option>
+        <option value="CDD">CDD</option>
+        <option value="LIB">Freelance</option>
+        <option value="MIS">Intérim</option>
+        <option value="SAI">Stage</option>
+        <option value="CCE">Alternance</option>
+        <option value="DIN">Prof.</option>
+      </select>
+      <!-- Filtre type contrat -->
+      <select class="scsel" id="ctsel" multiple size="1" title="Type de contrat" style="min-width:110px">
+        <option value="CDI" selected>CDI</option>
+        <option value="CDD">CDD</option>
+        <option value="freelance">Freelance</option>
+        <option value="stage">Stage</option>
+        <option value="alternance">Alternance</option>
+        <option value="professionalisation">Professionnalisation</option>
+        <option value="POEI">POEI</option>
+      </select>
       <button class="selbtn" onclick="selAll()">☐ Tout</button>
       <button class="resetbtn" onclick="confirmReset()" title="Vider les offres">🗑</button>
       <button class="genbtn" id="genbtn" onclick="genSelected()">
@@ -386,6 +426,29 @@ input[type=file]{display:none}
     <div class="list-scroll" id="readyList"></div>
   </div>
 
+  <!-- LUCY IA -->
+  <div class="view" id="viewLucy">
+    <div class="list-scroll" id="lucyContent" style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:20px">✦</span>
+          <div>
+            <strong style="font-size:13px">Lucy — Career Manager IA</strong>
+            <p style="font-size:11px;color:var(--m);margin-top:2px">Collez une offre d'emploi (texte, URL ou PDF) pour obtenir une analyse, une lettre et un CV adapté</p>
+          </div>
+        </div>
+        <textarea id="lucyInput" placeholder="Collez ici le texte de l'offre, une URL ou décrivez le poste..." style="width:100%;padding:12px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:12px;line-height:1.7;resize:none;outline:none;min-height:120px;transition:border-color .2s" onfocus="this.style.borderColor='var(--a)'" onblur="this.style.borderColor='var(--b)'"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button onclick="lucyAnalyze()" id="lucyBtn" style="padding:8px 18px;border-radius:7px;border:none;background:var(--a);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
+            <span id="lucySp" class="sp"></span>✦ Analyser avec Lucy
+          </button>
+          <button onclick="document.getElementById('lucyInput').value='';document.getElementById('lucyResult').innerHTML=''" style="padding:8px 12px;border-radius:7px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer">Effacer</button>
+        </div>
+      </div>
+      <div id="lucyResult"></div>
+    </div>
+  </div>
+
   <!-- ARCHIVES -->
   <div class="view" id="viewArch">
     <div class="list-scroll" id="archList"></div>
@@ -394,6 +457,29 @@ input[type=file]{display:none}
   <!-- STATS -->
   <div class="view" id="viewStats">
     <div class="stats-scroll" id="statsContent"></div>
+  </div>
+
+  <!-- LUCY IA CHAT -->
+  <div class="view" id="viewLucy">
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;height:100%">
+      <div id="lucyMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div id="lucyWelcome" style="text-align:center;padding:24px 16px;color:var(--m)">
+          <div style="font-size:32px;margin-bottom:10px">✦</div>
+          <div style="font-size:14px;font-weight:700;color:var(--t);margin-bottom:6px">Lucy — Career Manager IA</div>
+          <div style="font-size:12px;line-height:1.7;max-width:340px;margin:0 auto">Stratège carrière personnelle. Analyse d'offres, positionnement marché, préparation entretiens, optimisation CV.</div>
+          <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:7px;justify-content:center" id="lucyChips">
+            <button onclick="lucyPrompt('Analyse mon profil et dis-moi mon positionnement sur le marché IDF')" class="lucy-chip">📊 Mon positionnement</button>
+            <button onclick="lucyPrompt('Quels sont les 3 axes d\'amélioration prioritaires de mon CV ?')" class="lucy-chip">📝 Améliorer mon CV</button>
+            <button onclick="lucyPrompt('Prépare-moi pour un entretien senior demain')" class="lucy-chip">🎯 Préparer entretien</button>
+            <button onclick="lucyPrompt('Tendances marché PO/PM IDF 2026 ?')" class="lucy-chip">📈 Tendances marché</button>
+          </div>
+        </div>
+      </div>
+      <div style="padding:12px 16px;border-top:1px solid var(--b);display:flex;gap:8px;background:var(--s1);flex-shrink:0">
+        <input id="lucyInput" type="text" placeholder="Posez votre question à Lucy..." style="flex:1;padding:10px 14px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none" onkeydown="if(event.key==='Enter')sendToLucy()" onfocus="this.style.borderColor='var(--a)'" onblur="this.style.borderColor='var(--b)'">
+        <button onclick="sendToLucy()" style="padding:10px 18px;border-radius:8px;border:none;background:var(--a);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px"><span id="lucySp" class="sp"></span>→</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -436,6 +522,18 @@ input[type=file]{display:none}
         Continuer avec Google
       </button>
       <p style="font-size:10px;color:var(--m);margin-top:10px;text-align:center">Magic link valable 1 heure · Aucun mot de passe</p>
+      <div style="text-align:center;margin-top:12px">
+        <span onclick="enterDemoMode()" style="font-size:11px;color:var(--m);cursor:pointer;text-decoration:underline;text-underline-offset:2px">Essayer sans compte (mode démo limité)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin:10px 0 4px">
+        <div style="flex:1;height:1px;background:var(--b)"></div>
+        <span style="font-size:10px;color:var(--m);font-family:'Space Mono',monospace">ou</span>
+        <div style="flex:1;height:1px;background:var(--b)"></div>
+      </div>
+      <button onclick="startDemo()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--b);background:transparent;color:var(--m);font-family:'Space Grotesk',sans-serif;font-size:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--a)';this.style.color='var(--a)'" onmouseout="this.style.borderColor='var(--b)';this.style.color='var(--m)'">
+        Essayer sans compte →
+      </button>
+      <p style="font-size:9px;color:var(--m);text-align:center;margin-top:6px;opacity:.7">Mode démo · 1 génération · données non sauvegardées</p>
     </div>
     <div id="loginConfirm" style="text-align:center;display:none">
       <div style="font-size:32px;margin-bottom:10px">📨</div>
@@ -586,7 +684,8 @@ let statuses= JSON.parse(localStorage.getItem('lj_st')   || '{}');
 let archived= new Set(JSON.parse(localStorage.getItem('lj_arch') || '[]'));
 let sel = new Set(), doneSet = new Set(results.map(r=>r.id)), genSet = new Set();
 let filter = 'all', activeTab = 'jobs', currentSendId = null;
-let sbClient = null, currentUser = null;
+let sbClient = null, currentUser = null, isDemo = false;
+let lucyHistory = [];
 
 const STATUS_LABELS = {generated:'Générée',sent:'Envoyée',replied:'Réponse',interview:'Entretien',offer:'Offre',rejected:'Refus'};
 
@@ -655,7 +754,15 @@ function showLoginError(msg) {
       <div style="font-size:32px;margin-bottom:10px">⚠️</div>
       <h2 style="margin-bottom:8px;color:var(--r);font-size:14px">Erreur serveur</h2>
       <p style="font-size:12px;color:var(--m);line-height:1.7">${msg}</p>
+      <button onclick="enterDemoMode()" style="margin-top:14px;width:100%;padding:10px;border-radius:8px;border:1px solid var(--b);background:var(--s2);color:var(--t);font-size:13px;cursor:pointer">Continuer en mode démo →</button>
     </div>`;
+}
+
+function enterDemoMode() {
+  isDemo = true;
+  document.getElementById('loginov').classList.add('hide');
+  document.getElementById('demoBanner').style.display = 'flex';
+  continueInit();
 }
 
 async function sendMagicLink() {
@@ -673,6 +780,18 @@ async function sendMagicLink() {
 }
 
 function skipLogin() { /* Auth obligatoire */ }
+function startDemo() {
+  isDemo = true;
+  document.getElementById('loginov').classList.add('hide');
+  document.getElementById('demoBanner').style.display = 'flex';
+  // En démo: on peut utiliser si CV uploadé sinon on ouvre config
+  // Onglet Lucy : visible seulement si connecté
+  const lucyTab = document.getElementById('tabLucy');
+  if(lucyTab) lucyTab.style.display = (!isDemo) ? 'flex' : 'none';
+  if (!gkey || !cvTxt) { openSetup(); return; }
+  updCvStatus(); render(); updBadge(); renderReady();
+  if (jobs.length === 0) scrape();
+}
 
 async function signInGoogle() {
   if (!sbClient) { toast('Supabase non configuré — rechargez la page','err'); return; }
@@ -795,17 +914,21 @@ async function syncResult(r) {
 
 // ── INIT
 async function init() {
-  // Afficher le login en PREMIER, toujours
+  // Afficher le login en PREMIER
   document.getElementById('loginov').classList.remove('hide');
   await initSupabase();
-  // initSupabase gère tout: session active → continueInit, sinon login reste affiché
 }
 
 function continueInit() {
   gkey  = gkey  || localStorage.getItem('lj_k')  || '';
   cvTxt = cvTxt || localStorage.getItem('lj_cv') || '';
+  isDemo = false;
   document.getElementById('loginov').classList.add('hide');
   document.getElementById('ov').classList.add('hide');
+  document.getElementById('demoBanner').style.display = 'none';
+  // Afficher onglet Lucy si connecté
+  const lt = document.getElementById('tabLucy');
+  if (lt) lt.style.display = 'flex';
   if (!gkey || !cvTxt) { openSetup(); return; }
   updCvStatus(); render(); updBadge(); renderReady();
   if (jobs.length === 0) scrape(); else autoScore();
@@ -935,11 +1058,18 @@ async function scrape() {
     }
     txt.textContent='Recherche...';
     toast('🔍 Recherche : '+kw.slice(0,3).join(', ')+(kw.length>3?' ...':''),'info');
-    const url = '/api/jobs?kw='+encodeURIComponent(kw.join(','));
+    const ctSel = document.getElementById('ctsel');
+    const cts = ctSel ? [...ctSel.selectedOptions].map(o=>o.value).join(',') : 'CDI';
+    const url = '/api/jobs?kw='+encodeURIComponent(kw.join(','))+'&ct='+encodeURIComponent(cts);
     const r=await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
     const existIds=new Set(jobs.map(j=>j.id)); let added=0;
-    for(const j of (d.jobs||[])){ if(!existIds.has(j.id)){jobs.push(j);added++;} }
+    const maxOffers = isDemo ? 10 : 999;
+    for(const j of (d.jobs||[])){
+      if(!existIds.has(j.id) && jobs.length < maxOffers){ jobs.push(j); added++; }
+    }
+    if(isDemo && (d.jobs||[]).length > 10)
+      toast('Mode démo · 10 offres affichées · Connectez-vous pour tout voir','info');
     localStorage.setItem('lj_j',JSON.stringify(jobs));
     render(); toast(added+' offres adaptées à votre profil','ok'); autoScore();
   } catch(e) { toast('Erreur: '+e.message,'err'); }
@@ -991,6 +1121,7 @@ function render() {
     return true;
   });
   filtered.sort((a,b)=>(b._sc||0)-(a._sc||0));
+  if(isDemo) filtered = filtered.slice(0,10);
 
   const hiddenByScore = minSc>0 ? jobs.filter(j=>j._sc!==undefined&&j._sc<minSc).length : 0;
   const el=document.getElementById('grid');
@@ -1003,7 +1134,7 @@ function render() {
   el.innerHTML=filtered.map(j=>{
     const sc=j._sc, scC=sc===undefined?'sc-na':sc>=80?'sc-hi':sc>=60?'sc-mid':'sc-lo', scT=sc===undefined?'…':sc+'%';
     const isSel=sel.has(j.id), isGen=genSet.has(j.id), isDone=doneSet.has(j.id);
-    const srcCls=j.source==='WTTJ'?'wttj':j.source==='APEC'?'apec':'hw';
+    const srcCls=j.source==='France Travail'?'ft':j.source==='Adzuna'?'adzuna':j.source==='APEC'?'apec':j.source==='Indeed'?'indeed':j.source==='Cadremploi'?'cadremploi':'';
     return `<div class="jcard ${isSel?'sel':''} ${isGen?'gen':''} ${isDone?'done':''}" onclick="toggleSel('${j.id}')">
       <div class="jtop">
         <div class="jchk"></div>
@@ -1024,7 +1155,12 @@ function render() {
 function toggleSel(id){
   if(sel.has(id)){ sel.delete(id); }
   else {
-    if(sel.size>=10){ toast('Maximum 10 — au-delà le rate limit Groq bloque tout','err'); return; }
+    const limit = isDemo ? 1 : 10;
+    if(sel.size>=limit){
+      if(isDemo) toast('Mode démo — connectez-vous pour sélectionner plusieurs offres','info');
+      else toast('Maximum 10 — au-delà le rate limit Groq bloque tout','err');
+      return;
+    }
     sel.add(id);
   }
   updSel(); render();
@@ -1085,6 +1221,13 @@ function doReset(){
 async function genSelected(){
   if(!gkey){ toast('Configurez votre clé Groq','err'); openSetup(); return; }
   if(!cvTxt){ toast('Uploadez votre CV d\'abord','err'); openSetup(); return; }
+  // Mode démo : 1 seule génération autorisée
+  if(isDemo && results.length >= 1){
+    const b = document.getElementById('loginov');
+    document.getElementById('loginov').classList.remove('hide');
+    toast('Mode démo — connectez-vous pour générer plusieurs candidatures','info');
+    return;
+  }
   const ids=[...sel]; sel.clear(); updSel();
   ids.forEach(id=>genSet.add(id)); render();
   document.getElementById('genbar').classList.add('show');
@@ -1133,30 +1276,178 @@ async function genOne(jobId) {
 }
 
 function buildPrompt(job){
-  return `Génère une candidature pour ce poste en utilisant UNIQUEMENT les informations du CV fourni.
+  const p = userProfile || {};
+  const linkedin = p.linkedin || '';
+  const linkedinLine = linkedin ? `\nPour consulter mon profil complet : ${linkedin}` : '';
+  return `Tu es le candidat décrit dans le CV fourni. Génère une candidature percutante pour ce poste.
 
 OFFRE: ${job.title} chez ${job.company} — ${job.location||''}
+TYPE: ${job.contract||'CDI'}
 ${(job.description||'').substring(0,500)}
 
 CV COMPLET:
 ${cvTxt}
 
+RÈGLES ABSOLUES:
+- Lettre : 4 paragraphes COURTS (3-5 lignes chacun max), ton direct et confiant, style elevator speech
+- PAS de "je suis motivé", "passionné", "je me permets de"
+- PAS de mention d'un "CV adapté" ni de pièce jointe CV — uniquement le lien LinkedIn si disponible
+- Commencer par un hook sur l'entreprise ou le poste spécifique, pas par "Madame, Monsieur"
+- 2 réalisations chiffrées réelles du CV, adaptées à ce poste
+- Terminer par disponibilité et lien LinkedIn${linkedinLine ? '' : ' si disponible'}
+- CV : réorganiser les bullet points des expériences pour mettre EN PREMIER les tâches pertinentes pour CE poste, sans en supprimer aucune. Max 3 pages.
+- N'invente rien — utilise uniquement ce qui est dans le CV
+
 FORMAT EXACT:
 
 ===LETTRE===
-[4 paragraphes: accroche percutante | 2 expériences réelles chiffrées les plus pertinentes | valeur ajoutée concrète | disponibilité immédiate]
-Vous trouverez en pièce jointe une version adaptée de mon CV ainsi que mon CV complet.
+[Hook 1 phrase sur l'entreprise/poste]
+
+[2-3 lignes : ta valeur ajoutée avec 1 chiffre clé]
+
+[2-3 lignes : pourquoi CE poste et non un autre — lien avec tes expériences]
+
+[1-2 lignes : disponibilité + LinkedIn]${linkedinLine}
 Cordialement,
-[Prénom Nom du candidat extrait du CV]
+[Prénom NOM]
 ===OBJET===
-Candidature ${job.title} - [Prénom Nom]
+Candidature ${job.title} — [Prénom NOM]
 ===PROFIL===
-[Titre adapté] | [2-3 missions réelles pertinentes] | [Certifications du CV] | [Localisation] | Dispo immédiate
+[Titre adapté au poste] | [2 missions clés] | [Certifications] | Dispo immédiate
 ===COMP===
-[8-10 compétences et outils les plus pertinents, séparés par ·]
+[8 compétences les plus pertinentes pour CE poste, séparées par ·]
 ===EXP===
-[TOUTES les expériences, ordre chronologique inverse. Format: "Entreprise | Rôle | Période" puis • réalisations.]
+[Expériences dans l'ordre chronologique inverse. Pour chaque exp: "Entreprise | Rôle | Période" puis les bullet points avec EN PREMIER les tâches pertinentes pour CE poste, suivi des autres tâches. Ne supprimer aucune tâche existante dans le CV.]
 ===FIN===`;
+}
+
+
+async function genSelected(){
+  if(!gkey){ toast('Configurez votre clé Groq','err'); openSetup(); return; }
+  if(!cvTxt){ toast('Uploadez votre CV d\'abord','err'); openSetup(); return; }
+  // Mode démo : 1 seule génération autorisée
+  if(isDemo && results.length >= 1){
+    const b = document.getElementById('loginov');
+    document.getElementById('loginov').classList.remove('hide');
+    toast('Mode démo — connectez-vous pour générer plusieurs candidatures','info');
+    return;
+  }
+  const ids=[...sel]; sel.clear(); updSel();
+  ids.forEach(id=>genSet.add(id)); render();
+  document.getElementById('genbar').classList.add('show');
+  const delai = ids.length<=3?3000:ids.length<=6?4000:5000;
+  const estim = Math.round(ids.length*(20+delai/1000));
+  toast('Génération de '+ids.length+' candidature(s) — ~'+estim+'s','info');
+  for(let i=0;i<ids.length;i++){
+    await genOne(ids[i]);
+    if(i<ids.length-1) await wait(delai);
+  }
+  document.getElementById('genbar').classList.remove('show');
+  toast('✦ Toutes les candidatures sont prêtes','ok');
+}
+
+async function genOne(jobId) {
+  const job=jobs.find(j=>j.id===jobId); if(!job){genSet.delete(jobId);return;}
+  try {
+    const content=await groq([
+      {role:'system',content:'Tu es le candidat décrit dans le CV. Réponds UNIQUEMENT en français. Respecte exactement le format. N\'invente rien.'},
+      {role:'user',content:buildPrompt(job)}
+    ],3000,0.65);
+
+    const lM=content.match(/===LETTRE===\s*\n([\s\S]*?)===OBJET===/);
+    const oM=content.match(/===OBJET===\s*\n([^\n]+)/);
+    const pM=content.match(/===PROFIL===\s*\n([\s\S]*?)===COMP===/);
+    const cM=content.match(/===COMP===\s*\n([\s\S]*?)===EXP===/);
+    const eM=content.match(/===EXP===\s*\n([\s\S]*?)===FIN===/);
+
+    const result={
+      id:jobId, jobTitle:job.title, company:job.company, jobLink:job.link,
+      subject:oM?.[1]?.trim()||'Candidature '+job.title,
+      letter: lM?.[1]?.trim()||content,
+      profil: pM?.[1]?.trim()||'',
+      comp:   cM?.[1]?.trim()||'',
+      exp:    eM?.[1]?.trim()||'',
+      score:job._sc, ts:Date.now(), _new:true
+    };
+    results=results.filter(r=>r.id!==jobId); results.unshift(result);
+    statuses[jobId]=statuses[jobId]||'generated';
+    localStorage.setItem('lj_r',JSON.stringify(results));
+    localStorage.setItem('lj_st',JSON.stringify(statuses));
+    doneSet.add(jobId); genSet.delete(jobId); render(); updBadge(); renderReady();
+    syncResult(result);
+    toast('✦ '+job.company+' — prête','ok');
+  } catch(e){ genSet.delete(jobId); render(); toast('Erreur '+(job.company||jobId)+': '+e.message,'err'); }
+}
+
+function buildPrompt(job){
+  const p = userProfile||{};
+  const linkedin = p.linkedin || '';
+  const linkedinLine = linkedin ? `Retrouvez mon profil complet : ${linkedin}` : '';
+  return `Tu es expert en recrutement et personal branding. Génère une candidature percutante en utilisant UNIQUEMENT les infos du CV.
+
+OFFRE: ${job.title} chez ${job.company} — ${job.location||''}
+${(job.description||'').substring(0,500)}
+
+CV:
+${cvTxt}
+
+FORMAT — respecte exactement:
+
+===LETTRE===
+[LETTRE COURTE — 180 mots MAX — 4 paragraphes]
+P1 (2 lignes): Accroche avec un fait précis sur ${job.company} + lien avec l'offre. PAS "je suis motivé/passionné".
+P2 (3 lignes): 2 réalisations chiffrées du CV les plus pertinentes. Format: action + résultat mesurable.
+P3 (2 lignes): Valeur différenciante pour ${job.company} sur CE rôle précisément.
+P4 (1 ligne): Disponibilité + appel à l'action direct.
+${linkedinLine}
+Cordialement,
+[Prénom Nom extrait du CV]
+===OBJET===
+Candidature ${job.title} — [Prénom Nom]
+===PROFIL===
+[Titre adapté] | [2-3 missions réelles pertinentes] | [Certifications] | [Localisation] | Dispo immédiate
+===COMP===
+[8-10 compétences/outils du CV les + pertinents, séparés par ·]
+===EXP===
+[Toutes les expériences, ordre anti-chronologique.
+Format par poste: "Entreprise | Rôle | Période" puis bullet points.
+Mettre EN PREMIER les tâches pertinentes pour CE poste, puis les autres.
+NE PAS supprimer de tâches. MAX 3 pages.]
+===FIN===`;
+}
+
+
+async function genOne(jobId) {
+  const job=jobs.find(j=>j.id===jobId); if(!job){genSet.delete(jobId);return;}
+  try {
+    const content=await groq([
+      {role:'system',content:'Tu es le candidat décrit dans le CV. Réponds UNIQUEMENT en français. Respecte exactement le format. N\'invente rien.'},
+      {role:'user',content:buildPrompt(job)}
+    ],3000,0.65);
+
+    const lM=content.match(/===LETTRE===\s*\n([\s\S]*?)===OBJET===/);
+    const oM=content.match(/===OBJET===\s*\n([^\n]+)/);
+    const pM=content.match(/===PROFIL===\s*\n([\s\S]*?)===COMP===/);
+    const cM=content.match(/===COMP===\s*\n([\s\S]*?)===EXP===/);
+    const eM=content.match(/===EXP===\s*\n([\s\S]*?)===FIN===/);
+
+    const result={
+      id:jobId, jobTitle:job.title, company:job.company, jobLink:job.link,
+      subject:oM?.[1]?.trim()||'Candidature '+job.title,
+      letter: lM?.[1]?.trim()||content,
+      profil: pM?.[1]?.trim()||'',
+      comp:   cM?.[1]?.trim()||'',
+      exp:    eM?.[1]?.trim()||'',
+      score:job._sc, ts:Date.now(), _new:true
+    };
+    results=results.filter(r=>r.id!==jobId); results.unshift(result);
+    statuses[jobId]=statuses[jobId]||'generated';
+    localStorage.setItem('lj_r',JSON.stringify(results));
+    localStorage.setItem('lj_st',JSON.stringify(statuses));
+    doneSet.add(jobId); genSet.delete(jobId); render(); updBadge(); renderReady();
+    syncResult(result);
+    toast('✦ '+job.company+' — prête','ok');
+  } catch(e){ genSet.delete(jobId); render(); toast('Erreur '+(job.company||jobId)+': '+e.message,'err'); }
 }
 
 // ── STATUS
@@ -1252,17 +1543,96 @@ function copyLetter(id){
   navigator.clipboard.writeText('Objet: '+r.subject+'\n\n'+r.letter).then(()=>toast('Lettre copiée','ok'));
 }
 
+// ── LUCY IA CAREER MANAGER
+async function lucyAnalyze() {
+  const input = document.getElementById('lucyInput').value.trim();
+  if (!input) { toast('Collez une offre ou décrivez le poste','err'); return; }
+  if (!gkey)  { toast('Clé Groq requise — ⚙ Config','err'); return; }
+  if (!cvTxt) { toast('Uploadez votre CV d'abord','err'); return; }
+
+  const btn = document.getElementById('lucyBtn');
+  const sp  = document.getElementById('lucySp');
+  btn.disabled=true; sp.classList.add('on');
+  document.getElementById('lucyResult').innerHTML = '<div style="color:var(--m);font-size:12px;padding:16px;text-align:center">Lucy analyse votre profil et l'offre...</div>';
+
+  const p = userProfile || {};
+  const linkedin = p.linkedin || '';
+
+  const systemPrompt = `Tu es Lucy, une Career Manager IA d'élite dédiée au candidat décrit dans le CV fourni.
+Tu opères comme une consultante senior en recrutement avec 20 ans d'expertise.
+Ton style : direct, honnête, zéro flatterie, zéro hallucination, phrases courtes et percutantes.
+Tu réponds TOUJOURS en français.
+JAMAIS d'inventions — utilise uniquement ce qui est dans le CV fourni.
+Tu dois maximiser les chances du candidat sur chaque opportunité.`;
+
+  const userPrompt = `CV DU CANDIDAT:
+${cvTxt.substring(0,3000)}
+
+OFFRE / POSTE CIBLÉ:
+${input.substring(0,1500)}
+
+Analyse cette opportunité et fournis dans cet ordre:
+
+**1. VERDICT** (2 lignes max)
+Score de correspondance XX% — vert/orange/rouge — raison principale.
+
+**2. MATCH TABLE**
+| Dimension | Requis | Candidat | Match |
+(4-5 lignes max, les plus importantes)
+
+**3. LETTRE DE MOTIVATION** (style elevator speech, 4 paragraphes courts)
+- Hook sur l'entreprise/poste (1 phrase)
+- 2 réalisations chiffrées du CV pertinentes (2-3 lignes)
+- Pourquoi CE poste (2 lignes)
+- Disponibilité${linkedin ? ' + ' + linkedin : ''}
+Pas de "je suis motivé", "passionné", "je me permets de". Pas de mention de CV joint.
+
+**4. 3 POINTS CLÉS À VALORISER EN ENTRETIEN**
+(bullet points courts, basés sur le CV réel)
+
+**5. 1 POINT DE VIGILANCE**
+(ce qui pourrait bloquer la candidature)`;
+
+  try {
+    const result = await groq([
+      {role:'system', content: systemPrompt},
+      {role:'user',   content: userPrompt}
+    ], 2000, 0.5);
+
+    document.getElementById('lucyResult').innerHTML = `
+      <div style="background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:16px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--b)">
+          <span style="font-size:16px">✦</span>
+          <strong style="font-size:12px;color:var(--a)">Analyse Lucy</strong>
+          <span style="font-size:10px;color:var(--m);margin-left:auto">${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>
+        </div>
+        <div style="font-size:12px;line-height:1.8;color:var(--t);white-space:pre-wrap">${result.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\|(.*)\|/g, (m)=>'<code style="display:block;padding:4px 0;font-size:10px;color:var(--m)">'+m+'</code>')}</div>
+        <div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--b)">
+          <button onclick="navigator.clipboard.writeText(document.getElementById('lucyResult').innerText).then(()=>toast('Copié','ok'))" style="padding:6px 12px;border-radius:6px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer">⎘ Copier</button>
+          <button onclick="lucyAnalyze()" style="padding:6px 12px;border-radius:6px;border:1px solid var(--a);background:var(--ag);color:var(--a);font-size:11px;cursor:pointer">↺ Relancer</button>
+        </div>
+      </div>`;
+    toast('✦ Analyse Lucy prête','ok');
+  } catch(e) {
+    document.getElementById('lucyResult').innerHTML = `<div style="color:var(--r);font-size:12px;padding:12px">${e.message}</div>`;
+    toast('Erreur Lucy: '+e.message,'err');
+  } finally {
+    btn.disabled=false; sp.classList.remove('on');
+  }
+}
+
+
 // ── RENDER STATS
 function renderStats(){
   const el=document.getElementById('statsContent'); if(!el) return;
-  const total      =results.length;
-  const nbSent     =results.filter(r=>(statuses[r.id]||'generated')!=='generated').length;
-  const nbReplied  =results.filter(r=>statuses[r.id]==='replied').length;
+  const total=results.length;
+  const nbSent=results.filter(r=>(statuses[r.id]||'generated')!=='generated').length;
+  const nbReplied=results.filter(r=>statuses[r.id]==='replied').length;
   const nbInterview=results.filter(r=>statuses[r.id]==='interview').length;
-  const nbOffer    =results.filter(r=>statuses[r.id]==='offer').length;
-  const nbRejected =results.filter(r=>statuses[r.id]==='rejected').length;
-  const scores     =results.map(r=>r.score).filter(s=>s!=null);
-  const avgSc      =scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
+  const nbOffer=results.filter(r=>statuses[r.id]==='offer').length;
+  const nbRejected=results.filter(r=>statuses[r.id]==='rejected').length;
+  const scores=results.map(r=>r.score).filter(s=>s!=null);
+  const avgSc=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
   const srcCount={};
   jobs.forEach(j=>{ srcCount[j.source]=(srcCount[j.source]||0)+1; });
   const maxSrc=Math.max(...Object.values(srcCount),1);
@@ -1271,7 +1641,6 @@ function renderStats(){
   const maxBucket=Math.max(...buckets,1);
   const txReponse=nbSent>0?Math.round(nbReplied/nbSent*100):0;
   const txEntretien=nbReplied>0?Math.round(nbInterview/nbReplied*100):0;
-
   el.innerHTML=`
     <div class="stat-cards">
       <div class="stat-card"><div class="sn" style="color:var(--t)">${total}</div><div class="sl">Générées</div></div>
@@ -1281,7 +1650,6 @@ function renderStats(){
       <div class="stat-card"><div class="sn" style="color:var(--r)">${nbRejected}</div><div class="sl">Refus</div></div>
       ${avgSc!=null?`<div class="stat-card"><div class="sn" style="color:${avgSc>=75?'var(--g)':avgSc>=60?'var(--y)':'var(--r)'}">${avgSc}%</div><div class="sl">ATS moyen</div></div>`:''}
     </div>
-
     <div class="stat-section">
       <h3>Pipeline candidatures</h3>
       <div class="pipeline">
@@ -1293,24 +1661,8 @@ function renderStats(){
       </div>
       ${total>0?`<div style="font-size:11px;color:var(--m);margin-top:9px">Taux de réponse : <strong style="color:var(--t)">${txReponse}%</strong> &nbsp;·&nbsp; Taux entretien : <strong style="color:var(--t)">${txEntretien}%</strong></div>`:''}
     </div>
-
-    ${Object.keys(srcCount).length?`<div class="stat-section">
-      <h3>Sources (${jobs.length} offres)</h3>
-      ${['WTTJ','APEC','HelloWork'].filter(s=>srcCount[s]).map(s=>`
-        <div class="src-row">
-          <span class="src-name">${s}</span>
-          <div class="src-bar"><div class="src-fill ${s==='WTTJ'?'wttj':s==='APEC'?'apec':'hw'}" style="width:${Math.round((srcCount[s]||0)/maxSrc*100)}%"></div></div>
-          <span class="src-count">${srcCount[s]||0}</span>
-        </div>`).join('')}
-    </div>`:''}
-
-    ${scores.length?`<div class="stat-section">
-      <h3>Distribution ATS (${scores.length} scorées)</h3>
-      <div class="score-dist">
-        ${buckets.map(b=>`<div class="sc-bar" style="height:${Math.round(b/maxBucket*100)}%"></div>`).join('')}
-      </div>
-      <div class="sc-bar-labels"><span>0-20</span><span>20-40</span><span>40-60</span><span>60-80</span><span>80+</span></div>
-    </div>`:''}
+    ${Object.keys(srcCount).length?`<div class="stat-section"><h3>Sources (${jobs.length} offres)</h3>${['France Travail','Adzuna'].filter(s=>srcCount[s]).map(s=>`<div class="src-row"><span class="src-name">${s}</span><div class="src-bar"><div class="src-fill ${s==='France Travail'?'apec':'hw'}" style="width:${Math.round((srcCount[s]||0)/maxSrc*100)}%"></div></div><span class="src-count">${srcCount[s]||0}</span></div>`).join('')}</div>`:''}
+    ${scores.length?`<div class="stat-section"><h3>Distribution ATS (${scores.length} scorées)</h3><div class="score-dist">${buckets.map(b=>`<div class="sc-bar" style="height:${Math.round(b/maxBucket*100)}%"></div>`).join('')}</div><div class="sc-bar-labels"><span>0-20</span><span>20-40</span><span>40-60</span><span>60-80</span><span>80+</span></div></div>`:''}
   `;
 }
 
@@ -1348,8 +1700,7 @@ function getPDFb64(r){ return buildPDFDoc(r).output('datauristring').split(',')[
 function openSendModal(id){
   if(!cvB64){toast('CV original manquant — re-uploadez votre CV','err');return;}
   if(!gmailUser||!gmailPass){
-    // Pas de config Gmail → afficher le modal de config Gmail
-    currentSendId=id; // mémoriser pour après config
+    currentSendId=id;
     document.getElementById('gmailov').classList.remove('hide');
     return;
   }
@@ -1358,6 +1709,7 @@ function openSendModal(id){
   document.getElementById('sendto').value=gmailUser;
   document.getElementById('sendov').classList.remove('hide');
 }
+function closeSendModal(){ document.getElementById('sendov').classList.add('hide'); currentSendId=null; }
 
 function saveGmailConfig(){
   const em=document.getElementById('gcfg_email').value.trim();
@@ -1369,7 +1721,6 @@ function saveGmailConfig(){
   syncProfile();
   document.getElementById('gmailov').classList.add('hide');
   toast('Email configuré ✓','ok');
-  // Ouvrir le modal d'envoi si une candidature était en attente
   if(currentSendId){
     const r=results.find(r=>r.id===currentSendId);
     if(r){
@@ -1379,7 +1730,6 @@ function saveGmailConfig(){
     }
   }
 }
-function closeSendModal(){ document.getElementById('sendov').classList.add('hide'); currentSendId=null; }
 
 async function doSend(){
   const id=currentSendId, r=results.find(r=>r.id===id); if(!r) return;
@@ -1392,7 +1742,7 @@ async function doSend(){
     const pos=(r.jobTitle||'Offre').replace(/[^a-zA-Z0-9]/g,'_').substring(0,18);
     toast('Génération PDF...','info');
     const adaptedB64=getPDFb64(r);
-    const res=await fetch('/api/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({gmail_user:gmailUser,gmail_pass:gmailPass,to,subject:r.subject,body:r.letter,cv_adapted_b64:adaptedB64,cv_adapted_name:`CV_${n}_${pos}_adapte.pdf`,cv_original_b64:cvB64,cv_original_name:`CV_${n}_complet.pdf`})});
+    const res=await fetch('/api/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({gmail_user:gmailUser,gmail_pass:gmailPass,to,subject:r.subject,body:r.letter,cv_adapted_b64:adaptedB64,cv_adapted_name:`CV_${n}_${pos}.pdf`,cv_original_b64:cvB64,cv_original_name:`CV_${n}_complet.pdf`})});
     const data=await res.json();
     if(data.ok){ setStatus(id,'sent'); toast('✉ Envoyé → '+to,'ok'); closeSendModal(); }
     else toast('Erreur: '+(data.error||'inconnue'),'err');
@@ -1400,17 +1750,47 @@ async function doSend(){
   finally{ btn.disabled=false; sp.classList.remove('on'); }
 }
 
+// ── LUCY IA
+async function sendToLucy(){
+  const input=document.getElementById('lucyInput');
+  const msg=input.value.trim(); if(!msg) return;
+  if(!gkey){ toast('Clé Groq requise pour Lucy','err'); return; }
+  input.value='';
+  const chips=document.getElementById('lucyChips'); if(chips) chips.style.display='none';
+  const msgDiv=document.getElementById('lucyMessages');
+  msgDiv.innerHTML+=`<div class="lucy-msg user">${msg}</div>`;
+  const sp=document.getElementById('lucySp'); sp.classList.add('on');
+  const ctx=cvTxt?`\n\nCV de l'utilisateur:\n${cvTxt.substring(0,3000)}`:'';
+  const profil=userProfile?`\n\nProfil: ${JSON.stringify(userProfile)}`:'';
+  lucyHistory.push({role:'user',content:msg});
+  if(lucyHistory.length>10) lucyHistory=lucyHistory.slice(-10);
+  try {
+    const sysPrompt=`Tu es Lucy, Career Manager IA senior. Tu réponds en français, directement, sans fioriture. 20 ans d'expertise: Product Management, marché tech Paris IDF, ATS, personal branding. Analyse le profil et le CV de l'utilisateur pour des conseils stratégiques personnalisés. JAMAIS d'invention. Réponses courtes et actionnables. Termine toujours par une "Next Action" concrète.${ctx}${profil}`;
+    const reply=await groq([{role:'system',content:sysPrompt},...lucyHistory],800,0.7);
+    lucyHistory.push({role:'assistant',content:reply});
+    const formatted=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    msgDiv.innerHTML+=`<div class="lucy-msg ai">${formatted}</div>`;
+    msgDiv.scrollTop=msgDiv.scrollHeight;
+  } catch(e){ toast('Lucy: '+e.message,'err'); }
+  sp.classList.remove('on');
+}
+function lucyPrompt(msg){ document.getElementById('lucyInput').value=msg; sendToLucy(); }
+
 // ── TABS
 function showTab(t){
   activeTab=t;
-  ['jobs','ready','arch','stats'].forEach(v=>{
+  ['jobs','ready','arch','stats','lucy'].forEach(v=>{
     const cap=v.charAt(0).toUpperCase()+v.slice(1);
     document.getElementById('view'+cap)?.classList.toggle('on',v===t);
     document.getElementById('tab'+cap)?.classList.toggle('on',v===t);
   });
-  if(t==='ready')  renderReady();
-  if(t==='arch')   renderArchives();
-  if(t==='stats')  renderStats();
+  if(t==='ready') renderReady();
+  if(t==='arch')  renderArchives();
+  if(t==='stats') renderStats();
+}
+
+function updateContracts(){
+  if(jobs.length>0){ jobs=[]; localStorage.setItem('lj_j','[]'); render(); scrape(); }
 }
 
 function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
@@ -1421,32 +1801,6 @@ function toast(msg,type){
   t.textContent=msg; c.appendChild(t);
   requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('in')));
   setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),400);},3500);
-}
-
-function toggleTheme() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const newTheme = isDark ? 'light' : 'dark';
-  if (newTheme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    document.getElementById('themeBtn').textContent = '🌙';
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-    document.getElementById('themeBtn').textContent = '☀️';
-  }
-  localStorage.setItem('lj_theme', newTheme);
-}
-
-function applyTheme() {
-  const saved = localStorage.getItem('lj_theme') || 'light'; // light par défaut
-  if (saved === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    const btn = document.getElementById('themeBtn');
-    if (btn) btn.textContent = '🌙';
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-    const btn = document.getElementById('themeBtn');
-    if (btn) btn.textContent = '☀️';
-  }
 }
 
 applyTheme();

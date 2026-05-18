@@ -1828,7 +1828,18 @@ Bullet points courts, basés uniquement sur le CV réel et pertinents pour CE po
 Ce qui pourrait bloquer la candidature — soyez direct.
 
 ## 6. NEXT ACTION
-Une seule action concrète et prioritaire que le candidat doit faire maintenant.`;
+Une seule action concrète et prioritaire que le candidat doit faire maintenant.
+
+## 7. CV ADAPTÉ
+Génère un CV ATS-optimisé. Respecte exactement ces balises :
+
+===PROFIL===
+[Titre adapté au poste] | [2-3 missions clés pertinentes du CV] | [Certifications] | [Localisation] | Disponible immédiatement
+===COMP===
+[8-10 compétences et outils du CV les plus pertinents pour CE poste, séparés par ·]
+===EXP===
+[TOUTES les expériences dans l'ordre chronologique inverse. Pour chaque exp: "Entreprise | Rôle | Période" puis bullet points avec EN PREMIER les tâches pertinentes pour ce poste. Ne supprimer aucune tâche.]
+===FIN===`;
 
   try {
     const result = await groq([
@@ -1837,7 +1848,20 @@ Une seule action concrète et prioritaire que le candidat doit faire maintenant.
     ], 2500, 0.4);
 
     // Formatter le markdown basique
-    const formatted = result
+
+    // Extraire les sections CV du résultat
+    const _profilM = result.match(/===PROFIL===\s*\n([\s\S]*?)===COMP===/);
+    const _compM   = result.match(/===COMP===\s*\n([\s\S]*?)===EXP===/);
+    const _expM    = result.match(/===EXP===\s*\n([\s\S]*?)===FIN===/);
+    const _profil  = _profilM ? _profilM[1].trim() : '';
+    const _comp    = _compM   ? _compM[1].trim()   : '';
+    const _exp     = _expM    ? _expM[1].trim()     : '';
+    if (_profil || _comp || _exp) {
+      window._lucyCV = {profil:_profil, comp:_comp, exp:_exp, jobTitle:input.substring(0,60)};
+    }
+    // Nettoyer le résultat (enlever section CV brute)
+    const displayResult = result.replace(/## 7[\s\S]*$/, '').trim();
+    const formatted = displayResult
       .replace(/^## (.*?)$/gm, '<div style="font-size:13px;font-weight:700;color:var(--a);margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--b)">$1</div>')
       .replace(/^### (.*?)$/gm, '<div style="font-size:12px;font-weight:600;color:var(--t);margin:10px 0 5px">$1</div>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -1855,10 +1879,18 @@ Une seule action concrète et prioritaire que le candidat doit faire maintenant.
           <span style="font-size:10px;color:var(--m);margin-left:auto">${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>
         </div>
         <div style="font-size:12px;line-height:1.8;color:var(--t)">${formatted}</div>
+        ${window._lucyCV && (window._lucyCV.profil || window._lucyCV.comp) ? `
+        <div style="margin-top:14px;padding:12px;background:var(--s2);border-radius:8px;border:1px solid var(--b)">
+          <div style="font-size:12px;font-weight:700;color:var(--a);margin-bottom:8px">📄 CV Adapté généré</div>
+          ${window._lucyCV.profil ? '<div style="font-size:10px;color:var(--m);margin-bottom:2px">Profil</div><div style="font-size:11px;margin-bottom:8px;line-height:1.6">'+window._lucyCV.profil+'</div>' : ''}
+          ${window._lucyCV.comp   ? '<div style="font-size:10px;color:var(--m);margin-bottom:2px">Compétences</div><div style="font-size:11px;margin-bottom:8px;line-height:1.6">'+window._lucyCV.comp+'</div>' : ''}
+          ${window._lucyCV.exp    ? '<div style="font-size:10px;color:var(--m);margin-bottom:2px">Expériences</div><div style="font-size:11px;line-height:1.7;white-space:pre-wrap">'+window._lucyCV.exp+'</div>' : ''}
+          <button onclick="lucyDownloadPDF()" style="margin-top:10px;padding:7px 16px;border-radius:6px;border:none;background:var(--g);color:#fff;font-size:11px;font-weight:600;cursor:pointer">⬇ Télécharger PDF</button>
+        </div>` : ''}
         <div style="display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--b);flex-wrap:wrap">
           <button onclick="navigator.clipboard.writeText(document.getElementById(\'lucyResult\').innerText).then(()=>toast(\'Copié ✓\',\'ok\'))"
             style="padding:6px 12px;border-radius:6px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer">⎘ Copier</button>
-          <button onclick="document.getElementById(\'lucyInput\').value=\'\';document.getElementById(\'lucyResult\').innerHTML=\'\'"
+          <button onclick="document.getElementById(\'lucyInput\').value=\'\';document.getElementById(\'lucyResult\').innerHTML=\'\';window._lucyCV=null;"
             style="padding:6px 12px;border-radius:6px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer">✕ Effacer</button>
           <button onclick="lucyAnalyze()"
             style="padding:6px 14px;border-radius:6px;border:1px solid var(--a);background:var(--ag);color:var(--a);font-size:11px;cursor:pointer">↺ Relancer</button>
@@ -2059,6 +2091,18 @@ function toast(msg,type){
   t.textContent=msg; c.appendChild(t);
   requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('in')));
   setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),400);},3500);
+}
+
+
+function lucyDownloadPDF() {
+  const cv = window._lucyCV;
+  if (!cv) return;
+  const r = {profil:cv.profil, comp:cv.comp, exp:cv.exp, jobTitle:cv.jobTitle, company:'', jobLink:'', score:null};
+  const p = userProfile || {};
+  const n = (p.nom_complet||'CV').replace(/[^a-zA-Z0-9]/g,'_').substring(0,18);
+  const pos = cv.jobTitle.replace(/[^a-zA-Z0-9]/g,'_').substring(0,18);
+  buildPDFDoc(r).save('CV_'+n+'_'+pos+'.pdf');
+  toast('CV PDF téléchargé','ok');
 }
 
 applyTheme();

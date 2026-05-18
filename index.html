@@ -120,7 +120,8 @@ header{display:flex;align-items:center;gap:12px;padding:0 20px;height:48px;borde
 .hbtn{padding:5px 12px;border-radius:6px;border:1px solid var(--b);background:transparent;color:var(--m);font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s}
 .hbtn:hover{border-color:var(--a);color:var(--a)}
 .app{display:flex;flex:1;overflow:hidden;flex-direction:column}
-.tabs{display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--b);background:var(--s1);flex-shrink:0;gap:4px}
+.tabs{display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--b);background:var(--s1);flex-shrink:0;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
 .tab{padding:11px 16px;font-size:12px;color:var(--m);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:'Space Mono',monospace;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .tab:hover{color:var(--t)}
 .tab.on{color:var(--a);border-color:var(--a)}
@@ -678,33 +679,46 @@ input[type=file]{display:none}
 </div>
 
 <!-- LUCY FLOATING BUBBLE -->
-<button id="lucyBubble" onclick="toggleLucyPanel()"
-  style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:var(--a);border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 20px rgba(108,99,255,.4);z-index:250;display:flex;align-items:center;justify-content:center;transition:transform .2s"
-  onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"
-  title="Lucy Career Manager IA">
-  💬
-  <span id="lucyBubbleDot" style="position:absolute;top:4px;right:4px;width:10px;height:10px;background:#00d68f;border-radius:50%;border:2px solid var(--a);display:none"></span>
+<style>
+#lucyBubble{position:fixed;bottom:24px;right:24px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#a855f7);border:none;color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 24px rgba(108,99,255,.5);z-index:250;display:flex;align-items:center;justify-content:center;transition:all .25s;outline:none}
+#lucyBubble:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(108,99,255,.65)}
+#lucyBubble:active{transform:scale(.96)}
+#lucyPanel{display:none;position:fixed;bottom:94px;right:16px;width:min(400px,calc(100vw - 24px));height:min(560px,calc(100vh - 120px));background:var(--s1);border:1px solid rgba(108,99,255,.25);border-radius:20px;box-shadow:0 16px 60px rgba(0,0,0,.25),0 0 0 1px rgba(108,99,255,.1);z-index:249;flex-direction:column;overflow:hidden;animation:lucySlideIn .2s ease}
+@keyframes lucySlideIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+#lucyPanelHeader{display:flex;align-items:center;gap:10px;padding:14px 16px 12px;background:linear-gradient(135deg,rgba(108,99,255,.12),rgba(168,85,247,.08));border-bottom:1px solid rgba(108,99,255,.15);flex-shrink:0}
+#lucyPanelBody{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+#lucyPanelBody::-webkit-scrollbar{width:3px}
+#lucyPanelBody::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
+#lucyPanelFooter{padding:10px 12px;border-top:1px solid var(--b);display:flex;gap:8px;flex-shrink:0;background:var(--s1)}
+#lucyInput{width:100%;padding:11px 13px;background:var(--s2);border:1.5px solid var(--b);border-radius:10px;color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:12px;line-height:1.65;resize:none;outline:none;min-height:100px;box-sizing:border-box;transition:border-color .2s}
+#lucyInput:focus{border-color:var(--a)}
+</style>
+<button id="lucyBubble" onclick="toggleLucyPanel()" title="Lucy Career Manager IA" aria-label="Ouvrir Lucy Career Manager">
+  ✦
+  <span id="lucyBubbleDot" style="position:absolute;top:3px;right:3px;width:12px;height:12px;background:#00d68f;border-radius:50%;border:2px solid #6c63ff;display:none;font-size:7px;line-height:12px;text-align:center"></span>
 </button>
 
-<!-- LUCY PANEL -->
-<div id="lucyPanel" style="display:none;position:fixed;bottom:90px;right:24px;width:min(420px,calc(100vw - 32px));max-height:80vh;background:var(--s1);border:1px solid var(--b);border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.3);z-index:249;flex-direction:column;overflow:hidden">
-  <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--b);background:var(--s1)">
-    <span style="font-size:16px">✦</span>
-    <div>
-      <strong style="font-size:12px;color:var(--a)">Lucy Career Manager</strong>
-      <p style="font-size:10px;color:var(--m);margin-top:1px">Collez une offre pour une analyse complète</p>
+<div id="lucyPanel" style="display:none">
+  <div id="lucyPanelHeader">
+    <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#a855f7);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">✦</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:700;color:var(--t)">Lucy Career Manager</div>
+      <div style="font-size:10px;color:var(--m);margin-top:1px">IA · Analyse · Lettre · CV adapté</div>
     </div>
-    <button onclick="toggleLucyPanel()" style="margin-left:auto;background:none;border:none;color:var(--m);cursor:pointer;font-size:18px;padding:4px 8px">✕</button>
+    <button onclick="toggleLucyPanel()" style="background:none;border:none;color:var(--m);cursor:pointer;font-size:16px;padding:6px;border-radius:8px;line-height:1;transition:background .15s" onmouseover="this.style.background='var(--b)'" onmouseout="this.style.background='none'">✕</button>
   </div>
-  <div style="flex:1;overflow-y:auto;padding:12px;max-height:calc(80vh - 130px)">
-    <textarea id="lucyInput" placeholder="Collez ici le texte de l'offre, une URL ou décrivez le poste..." style="width:100%;padding:10px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:12px;line-height:1.6;resize:none;outline:none;min-height:90px;box-sizing:border-box" onfocus="this.style.borderColor='var(--a)'" onblur="this.style.borderColor='var(--b)'"></textarea>
-    <div id="lucyResult" style="margin-top:10px"></div>
+  <div id="lucyPanelBody">
+    <div style="font-size:11px;color:var(--m);line-height:1.6;padding:8px 10px;background:rgba(108,99,255,.06);border-radius:8px;border-left:3px solid var(--a)">
+      Collez une offre d'emploi (texte ou URL) et Lucy analyse le match avec votre CV, génère une lettre et un CV adapté.
+    </div>
+    <textarea id="lucyInput" placeholder="Collez le texte de l'offre ici..."></textarea>
+    <div id="lucyResult"></div>
   </div>
-  <div style="padding:10px 12px;border-top:1px solid var(--b);display:flex;gap:8px">
-    <button onclick="lucyAnalyze()" id="lucyBtn" style="flex:1;padding:9px;border-radius:7px;border:none;background:var(--a);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
-      <span id="lucySp" class="sp"></span>✦ Analyser
+  <div id="lucyPanelFooter">
+    <button onclick="lucyAnalyze()" id="lucyBtn" style="flex:1;padding:10px;border-radius:9px;border:none;background:linear-gradient(135deg,#6c63ff,#a855f7);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .2s">
+      <span id="lucySp" class="sp"></span>✦ Analyser avec Lucy
     </button>
-    <button onclick="document.getElementById('lucyInput').value='';document.getElementById('lucyResult').innerHTML='';window._lucyCV=null;" style="padding:9px 12px;border-radius:7px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer">✕</button>
+    <button onclick="document.getElementById('lucyInput').value='';document.getElementById('lucyResult').innerHTML='';window._lucyCV=null;" style="padding:10px 13px;border-radius:9px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--r)';this.style.color='var(--r)'" onmouseout="this.style.borderColor='var(--b)';this.style.color='var(--m)'">✕</button>
   </div>
 </div>
 
@@ -1175,7 +1189,62 @@ async function extractPdf(file) {
       txt+=c.items.map(s=>s.str).join(' ')+'\n';
       document.getElementById('pbari').style.width=(i/total*100)+'%';
     }
-    cvTxt=txt.trim(); localStorage.setItem('lj_cv',cvTxt);
+    const rawTxt = txt.trim();
+
+    // ── VALIDATION CV ──────────────────────────────────────
+    // 1. Vide ou trop court
+    if (rawTxt.length < 200) {
+      document.getElementById('cvds2').textContent = 'Erreur : CV trop court ou vide (min 200 caractères)';
+      document.getElementById('pbar2').classList.remove('show');
+      toast('CV invalide — document trop court ou vide','err');
+      btn.disabled=false; sp.classList.remove('on');
+      return;
+    }
+    // 2. Trop long (> 80k chars = probablement pas un CV)
+    if (rawTxt.length > 80000) {
+      document.getElementById('cvds2').textContent = 'Erreur : document trop volumineux';
+      document.getElementById('pbar2').classList.remove('show');
+      toast('Document trop volumineux — uploadez votre CV uniquement','err');
+      btn.disabled=false; sp.classList.remove('on');
+      return;
+    }
+    // 3. Sanitisation anti-injection prompt
+    // Supprimer les patterns d'injection connus
+    const injectionPatterns = [
+      /ignore\s+(all\s+)?(previous\s+|above\s+)?instructions?/gi,
+      /forget\s+(everything|all|previous)/gi,
+      /you\s+are\s+now\s+(a\s+)?/gi,
+      /act\s+as\s+(a\s+|an\s+)?/gi,
+      /new\s+instructions?:/gi,
+      /system\s*:\s*you/gi,
+      /\[INST\]|\[\/INST\]|<\|im_start\|>|<\|im_end\|>/g,
+      /###\s*(instruction|system|prompt)/gi,
+      /return\s+(json|keywords|only):/gi,
+    ];
+    let cvSanitized = rawTxt;
+    let injectionFound = false;
+    injectionPatterns.forEach(pattern => {
+      if (pattern.test(cvSanitized)) {
+        injectionFound = true;
+        cvSanitized = cvSanitized.replace(pattern, '[contenu supprimé]');
+      }
+    });
+    if (injectionFound) {
+      console.warn('Injection prompt détectée et nettoyée dans le CV');
+      toast('⚠ Contenu suspect détecté dans le PDF — nettoyé automatiquement','info');
+    }
+    // 4. Vérifier que le texte ressemble à un CV (contient des mots réels)
+    const wordCount = cvSanitized.split(/\s+/).filter(w=>w.length>2).length;
+    if (wordCount < 50) {
+      document.getElementById('cvds2').textContent = 'Erreur : contenu illisible ou PDF scanné sans OCR';
+      document.getElementById('pbar2').classList.remove('show');
+      toast('CV illisible — utilisez un PDF avec texte sélectionnable','err');
+      btn.disabled=false; sp.classList.remove('on');
+      return;
+    }
+    // ──────────────────────────────────────────────────────
+    cvTxt = cvSanitized;
+    localStorage.setItem('lj_cv', cvTxt);
     // Reset profil — nouveau CV = nouveaux keywords obligatoires
     userProfile=null; localStorage.removeItem('lj_profile');
     document.getElementById('cvdh').textContent='✓ '+file.name;
@@ -1200,7 +1269,15 @@ async function extractProfile() {
   const _prevKey = gkey;
   if(!gkey && key) gkey = key;
   try {
-    const prompt = 'Analyse ce CV et extrais les informations. JSON uniquement, sans backticks, sans commentaires.\n\nFormat STRICT:\n{"nom_complet":"Prénom NOM","titre":"Titre professionnel principal","telephone":"","email":"","linkedin":"","localisation":"Ville","disponibilite":"Immédiate","certifications":[],"langues":"","keywords_recherche":["kw1","kw2","kw3"]}\n\nRègle absolue pour keywords_recherche:\n- Lire TOUT le CV avant de répondre\n- Extraire 3 à 5 intitulés de poste RÉELS présents dans ce CV spécifique\n- NE JAMAIS inventer ou généraliser — utiliser uniquement ce qui est écrit\n- Si le CV contient "Ingénieur Réseau" → mettre "Ingénieur Réseau"\n- Si le CV contient "Data Scientist" → mettre "Data Scientist"\n- Si le CV contient "Chef de Projet MOA" → mettre "Chef de Projet MOA"\n\nCV COMPLET:\n'+cvTxt;
+    // Double sanitisation avant envoi à Groq
+    const safeCvTxt = cvTxt
+      .replace(/ignore\s+(all\s+)?(previous\s+)?instructions?/gi, '[supprimé]')
+      .replace(/\[INST\]|\[\/INST\]|<\|im_start\|>|<\|im_end\|>/g, '')
+      .replace(/system\s*:\s*you/gi, '[supprimé]')
+      .replace(/###\s*(instruction|system)/gi, '[supprimé]')
+      .substring(0, 12000); // Max 12000 chars (environ 3 pages A4)
+
+    const prompt = 'Analyse ce CV et extrais les informations. JSON uniquement, sans backticks, sans commentaires.\n\nFormat STRICT:\n{"nom_complet":"Prénom NOM","titre":"Titre professionnel principal","telephone":"","email":"","linkedin":"","localisation":"Ville","disponibilite":"Immédiate","certifications":[],"langues":"","keywords_recherche":["kw1","kw2"]}\n\nRègle absolue pour keywords_recherche:\n- Lire le CV en entier\n- Extraire 4 à 6 termes courts (1 à 3 mots maximum) directement tirés du contenu de CE CV\n- Ces termes serviront à chercher des offres sur des jobboards — ils doivent être courts et reconnus\n- Ne jamais inventer, ne jamais généraliser, ne jamais utiliser des exemples extérieurs au CV\n- Uniquement ce qui est écrit dans ce CV spécifique\n\nCV COMPLET:\n'+safeCvTxt;
     const raw=await groq([{role:'user',content:prompt}],400,0);
     userProfile=JSON.parse(raw.replace(/```json|```/g,'').trim());
     // Si keywords_recherche absent → le dériver du titre et du CV

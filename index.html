@@ -765,6 +765,17 @@ async function startDemo() {
   const btn=document.getElementById('startBtn'), sp=document.getElementById('startSp');
   btn.disabled=true; sp.classList.add('on');
   isDemo=true;
+  // Attendre que la clé démo soit chargée si ce n'est pas encore fait
+  if (!window._groqDemoKey) {
+    try {
+      const cfg = await fetch('/api/config').then(r=>r.json());
+      if (cfg.groq_demo_key) window._groqDemoKey = cfg.groq_demo_key;
+    } catch(e) { console.warn('config fetch:', e); }
+  }
+  if (!window._groqDemoKey) {
+    toast('Clé démo indisponible — vérifiez la variable GROQ_DEMO_KEY dans Vercel','err');
+    btn.disabled=false; sp.classList.remove('on'); return;
+  }
   // Afficher bannière démo
   const db=document.getElementById('demoBanner');
   if(db) db.style.display='flex';

@@ -1214,7 +1214,8 @@ async function scrape() {
       return;
     }
     // Profil pas encore extrait → extraire d'abord (bloquant)
-    if (!userProfile?.keywords_recherche?.length && gkey) {
+    const hasGroqKey = gkey || (isDemo && (window._groqDemoKey || true));
+    if (!userProfile?.keywords_recherche?.length && hasGroqKey) {
       txt.textContent='Analyse du CV...';
       toast('Extraction des mots-clés de votre CV...','info');
       await extractProfile();

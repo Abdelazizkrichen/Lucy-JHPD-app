@@ -1222,17 +1222,22 @@ async function scrape() {
     // Vérifier qu'on a bien des keywords
     const kw = userProfile?.keywords_recherche;
     if (!kw || !kw.length) {
-      // Dernier recours : extraire mots clés bruts du CV
-      const stopwords = new Set(['avec','pour','dans','sur','les','des','une','est','par','que','qui']);
-      const words = cvTxt.substring(0,2000).split(/\W+/)
-        .map(w=>w.toLowerCase().trim())
-        .filter(w=>w.length>5 && !stopwords.has(w));
-      const freq = {};
-      words.forEach(w=>{ freq[w]=(freq[w]||0)+1; });
-      const topWords = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
+      // Dernier recours : extraire les intitulés depuis les premières lignes du CV
+      const cvLines = cvTxt.split('\n').map(l=>l.trim()).filter(l=>l.length>8 && l.length<80);
+      const jobTerms = ['ingénieur','développeur','chef de projet','product owner','manager','consultant','analyste','architecte','technicien','responsable','directeur','lead'];
+      const topWords = [];
+      for (const line of cvLines.slice(0,20)) {
+        const low = line.toLowerCase();
+        if (jobTerms.some(t=>low.includes(t)) && topWords.length < 4) {
+          topWords.push(line.substring(0,60).trim());
+        }
+      }
+      // Si toujours rien → 3 premières lignes du CV
+      if (!topWords.length) cvLines.slice(0,3).forEach(l=>topWords.push(l));
       if (topWords.length) {
         toast('Mots-clés extraits du CV : '+topWords.slice(0,3).join(', '),'info');
-        const url = '/api/jobs?kw='+encodeURIComponent(topWords.join(','))+'&ct='+cts;
+        const ctsFb = selectedContracts.length > 0 ? selectedContracts.join(',') : 'CDI,CDD,freelance,stage,alternance,professionalisation,POEI';
+        const url = '/api/jobs?kw='+encodeURIComponent(topWords.join(','))+'&ct='+ctsFb;
         const r=await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status);
         const d=await r.json();
         const existIds=new Set(jobs.map(j=>j.id)); let added=0;

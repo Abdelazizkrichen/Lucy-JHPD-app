@@ -1181,8 +1181,19 @@ async function extractProfile() {
     const prompt = 'Analyse ce CV et extrais les informations. JSON uniquement, sans backticks.\nFormat:\n{"nom_complet":"Prénom NOM","titre":"Titre principal","telephone":"0600000000","email":"email@domaine.com","linkedin":"linkedin.com/in/profil","localisation":"Ville","disponibilite":"Immédiate","certifications":["cert1"],"langues":"Français : Courant","keywords_recherche":["intitule1","intitule2","intitule3"]}\n\nPour keywords_recherche: 3-5 intitulés de poste courts en français adaptés au profil (ex: développeur fullstack, data scientist, chef de projet...).\n\nCV:\n'+cvTxt.substring(0,3000);
     const raw=await groq([{role:'user',content:prompt}],400,0);
     userProfile=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    // Si keywords_recherche absent → le dériver du titre et du CV
+    if (!userProfile.keywords_recherche || !userProfile.keywords_recherche.length) {
+      const titre = userProfile.titre || '';
+      // Extraire mots significatifs du titre (sans mots vides)
+      const stopwords = ['et','de','du','des','le','la','les','en','au','aux','un','une','sur','pour','avec'];
+      const kw = titre.split(/[\s,\/|·\-]+/)
+        .map(w=>w.trim().toLowerCase())
+        .filter(w=>w.length>3 && !stopwords.includes(w));
+      // Ajouter le titre complet comme premier keyword
+      userProfile.keywords_recherche = titre ? [titre, ...kw.slice(0,3)] : kw.slice(0,4);
+    }
     localStorage.setItem('lj_profile',JSON.stringify(userProfile));
-    toast('Profil extrait : '+userProfile.nom_complet,'ok');
+    toast('Profil extrait : '+(userProfile.nom_complet||'Candidat'),'ok');
     if(!isDemo) syncProfile();
   } catch(e) {
     console.error('extractProfile error:', e);
@@ -1211,8 +1222,26 @@ async function scrape() {
     // Vérifier qu'on a bien des keywords
     const kw = userProfile?.keywords_recherche;
     if (!kw || !kw.length) {
-      // Ne devrait pas arriver ici (extractProfile aurait dû throw)
-      toast('Profil non extrait — relancez la recherche','err');
+      // Dernier recours : extraire mots clés bruts du CV
+      const stopwords = new Set(['avec','pour','dans','sur','les','des','une','est','par','que','qui']);
+      const words = cvTxt.substring(0,2000).split(/\W+/)
+        .map(w=>w.toLowerCase().trim())
+        .filter(w=>w.length>5 && !stopwords.has(w));
+      const freq = {};
+      words.forEach(w=>{ freq[w]=(freq[w]||0)+1; });
+      const topWords = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
+      if (topWords.length) {
+        toast('Mots-clés extraits du CV : '+topWords.slice(0,3).join(', '),'info');
+        const url = '/api/jobs?kw='+encodeURIComponent(topWords.join(','))+'&ct='+cts;
+        const r=await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status);
+        const d=await r.json();
+        const existIds=new Set(jobs.map(j=>j.id)); let added=0;
+        for(const j of (d.jobs||[])){ if(!existIds.has(j.id)){jobs.push(j);added++;} }
+        localStorage.setItem('lj_j',JSON.stringify(jobs));
+        render(); toast(added+' offres trouvées','ok'); autoScore();
+        return;
+      }
+      toast('Impossible d\'extraire les mots-clés — vérifiez votre clé Groq','err');
       btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher';
       return;
     }

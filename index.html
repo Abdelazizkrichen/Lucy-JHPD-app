@@ -1161,15 +1161,20 @@ function arrayBufferToBase64(buf) {
 }
 
 async function extractProfile() {
-  if(!gkey||!cvTxt) return;
+  const key = gkey || (isDemo && window._groqDemoKey ? window._groqDemoKey : '');
+  if(!key||!cvTxt) return;
+  // Temporairement setter gkey pour que groq() fonctionne
+  const _prevKey = gkey;
+  if(!gkey && key) gkey = key;
   try {
     const prompt = 'Analyse ce CV et extrais les informations. JSON uniquement, sans backticks.\nFormat:\n{"nom_complet":"Prénom NOM","titre":"Titre principal","telephone":"0600000000","email":"email@domaine.com","linkedin":"linkedin.com/in/profil","localisation":"Ville","disponibilite":"Immédiate","certifications":["cert1"],"langues":"Français : Courant","keywords_recherche":["intitule1","intitule2","intitule3"]}\n\nPour keywords_recherche: 3-5 intitulés de poste courts en français adaptés au profil (ex: développeur fullstack, data scientist, chef de projet...).\n\nCV:\n'+cvTxt.substring(0,3000);
     const raw=await groq([{role:'user',content:prompt}],400,0);
     userProfile=JSON.parse(raw.replace(/```json|```/g,'').trim());
     localStorage.setItem('lj_profile',JSON.stringify(userProfile));
     toast('Profil extrait : '+userProfile.nom_complet,'ok');
-    syncProfile();
+    if(!isDemo) syncProfile();
   } catch(e) { console.warn('extractProfile:',e); }
+  finally { if(!_prevKey) gkey = ''; }
 }
 async function scrape() {
   const btn=document.getElementById('scrpbtn'), sp=document.getElementById('scrpsp'), txt=document.getElementById('scrptxt');
@@ -1191,7 +1196,7 @@ async function scrape() {
     // Vérifier qu'on a bien des keywords
     const kw = userProfile?.keywords_recherche;
     if (!kw || !kw.length) {
-      toast('Impossible d\'extraire les mots-clés du CV — vérifiez votre clé Groq','err');
+      toast('Extraction CV échouée — vérifiez votre clé Groq ou reconnectez-vous','err');
       btn.disabled=false; sp.classList.remove('on'); txt.textContent='↻ Rechercher';
       return;
     }

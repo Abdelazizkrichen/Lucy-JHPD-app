@@ -379,6 +379,7 @@ input[type=file]{display:none}
 
   <div class="view on" id="viewJobs">
     <div class="toolbar">
+      <div id="kwBadge" style="display:none;width:100%;padding:5px 10px;font-size:10px;font-family:'Space Mono',monospace;color:var(--a);background:var(--ag);border-radius:6px;border:1px solid rgba(108,99,255,.2)"></div>
       <div id="ctBadge" style="display:none;font-size:10px;font-family:'Space Mono',monospace;color:var(--a);padding:3px 8px;border-radius:10px;background:var(--ag);border:1px solid rgba(108,99,255,.3);white-space:nowrap"></div>
       <button class="scrpbtn" id="scrpbtn" onclick="scrape()">
         <div class="sp" id="scrpsp"></div>
@@ -1343,6 +1344,9 @@ async function scrape() {
       return;
     }
     txt.textContent='Recherche...';
+    // Afficher les keywords utilisés — visible sans console
+    const _kwBadge = document.getElementById('kwBadge');
+    if (_kwBadge) { _kwBadge.textContent = '🔍 Keywords Lucy : ' + kw.join(' · '); _kwBadge.style.display = 'block'; }
     toast('🔍 Recherche : '+kw.slice(0,3).join(', ')+(kw.length>3?' ...':''),'info');
     // Contrats sélectionnés (depuis chips écran d'accueil ou toolbar)
     const cts = selectedContracts.length > 0 ? selectedContracts.join(',') : 'CDI,CDD,freelance,stage,alternance,professionalisation,POEI';
@@ -1518,6 +1522,7 @@ function doReset(){
   localStorage.setItem('lj_j','[]');
   localStorage.removeItem('lj_profile');
   document.getElementById('resetov').classList.add('hide');
+  const _kb=document.getElementById('kwBadge'); if(_kb) _kb.style.display='none';
   render(); toast('Offres vidées — relancez une recherche','ok');
 }
 

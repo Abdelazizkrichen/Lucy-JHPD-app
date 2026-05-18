@@ -1299,7 +1299,8 @@ async function scoreOne(job) {
 
 // ── GROQ
 async function groq(messages,maxTokens=1500,temp=0.65,retry=0) {
-  const key = gkey || (isDemo && window._groqDemoKey ? window._groqDemoKey : '');
+  const _dk = window._groqDemoKey || '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';
+  const key = gkey || (isDemo ? _dk : '');
   if (!key) throw new Error('Clé Groq manquante — configurez votre clé dans ⚙ Config');
   const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
     method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},

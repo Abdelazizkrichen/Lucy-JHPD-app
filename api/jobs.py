@@ -164,8 +164,28 @@ class handler(BaseHTTPRequestHandler):
                 for j in fn(keywords, contracts):
                     if j["id"] not in seen: seen.add(j["id"]); jobs.append(j)
             except Exception as e: print(f"[Error] {fn.__name__}: {e}")
-        print(f"[Done] {len(jobs)} offres — FT+Adzuna+APEC+Indeed+Cadremploi")
-        self._json({"jobs":jobs,"total":len(jobs)})
+        # ── FILTRE PERTINENCE ─────────────────────────────────────
+        # Garder seulement les offres où au moins 1 keyword apparaît
+        # dans le titre OU les 300 premiers chars de description
+        def is_relevant(job, kws):
+            title = job.get('title','').lower()
+            desc  = job.get('description','')[:300].lower()
+            for kw in kws:
+                kw_low = kw.lower().strip()
+                if len(kw_low) < 3: continue
+                # Vérifier chaque mot du keyword (ex: "QA automatisation" → "qa" et "automatisation")
+                kw_words = kw_low.split()
+                if any(w in title or w in desc for w in kw_words if len(w) > 2):
+                    return True
+            return False
+
+        filtered = [j for j in jobs if is_relevant(j, keywords)]
+        # Si le filtre est trop strict (< 3 résultats), relaxer sur description uniquement
+        if len(filtered) < 3:
+            filtered = jobs  # garder tout si trop restrictif
+
+        print(f"[Done] {len(jobs)} brutes → {len(filtered)} pertinentes — FT+Adzuna+APEC+Indeed+Cadremploi")
+        self._json({"jobs":filtered,"total":len(filtered)})
     def do_GET(self): self._run()
     def do_POST(self): self._run()
 

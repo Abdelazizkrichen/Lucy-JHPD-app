@@ -168,3 +168,48 @@ class handler(BaseHTTPRequestHandler):
         self._json({"jobs":jobs,"total":len(jobs)})
     def do_GET(self): self._run()
     def do_POST(self): self._run()
+
+
+# ── SANITISATION PDF côté serveur (appelé via POST si besoin futur)
+import re as _re
+
+def sanitize_cv_text(text: str) -> tuple:
+    """
+    Valide et nettoie le texte extrait d'un CV PDF.
+    Retourne (texte_nettoyé, erreur_ou_None)
+    """
+    if not text or len(text.strip()) < 200:
+        return '', 'CV trop court ou vide'
+
+    if len(text) > 80000:
+        return '', 'Document trop volumineux'
+
+    word_count = len([w for w in text.split() if len(w) > 2])
+    if word_count < 50:
+        return '', 'Contenu illisible — PDF scanné sans OCR'
+
+    # Anti-injection prompt
+    patterns = [
+        r'ignore\s+(all\s+)?(previous\s+|above\s+)?instructions?',
+        r'forget\s+(everything|all|previous)',
+        r'you\s+are\s+now\s+',
+        r'act\s+as\s+(a\s+|an\s+)',
+        r'new\s+instructions?\s*:',
+        r'system\s*:\s*you',
+        r'\[INST\]|\[\/INST\]|<\|im_start\|>|<\|im_end\|>',
+        r'###\s*(instruction|system|prompt)',
+        r'return\s+(json|keywords|only)\s*:',
+        r'disregard\s+(all|previous|above)',
+        r'jailbreak|DAN\s+mode|developer\s+mode',
+    ]
+    cleaned = text
+    injection_found = False
+    for p in patterns:
+        if _re.search(p, cleaned, _re.IGNORECASE):
+            injection_found = True
+            cleaned = _re.sub(p, '[supprimé]', cleaned, flags=_re.IGNORECASE)
+
+    # Limiter à 12000 chars (≈3 pages A4)
+    cleaned = cleaned[:12000]
+
+    return cleaned, None

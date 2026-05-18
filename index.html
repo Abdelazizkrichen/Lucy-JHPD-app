@@ -1093,8 +1093,8 @@ function updCvStatus() {
 function openSetup() {
   // Ne jamais ouvrir config si login pas encore fait
   if (!document.getElementById('loginov').classList.contains('hide')) return;
-  // Ne pas ouvrir config en mode démo
-  if (isDemo) { toast('Connectez-vous pour configurer votre propre clé Groq','info'); return; }
+  // En mode démo : config ouverte pour que l'user entre sa propre clé
+  // (sa clé remplace la clé démo automatiquement)
   document.getElementById('mkey').value = gkey;
   if (cvTxt) {
     document.getElementById('cvdh').textContent = '✓ CV chargé';
@@ -1299,9 +1299,12 @@ async function scoreOne(job) {
 }
 
 // ── GROQ
+function getKey() {
+  return gkey || (isDemo ? (window._groqDemoKey || '') : '');
+}
+
 async function groq(messages,maxTokens=1500,temp=0.65,retry=0) {
-  // Priorité : clé user → clé démo Vercel → erreur
-  const key = gkey || (isDemo ? (window._groqDemoKey || '') : '');
+  const key = getKey();
   if (!key) throw new Error('Clé Groq manquante — configurez votre clé dans ⚙ Config');
   const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
     method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
@@ -1429,8 +1432,8 @@ function doReset(){
 
 // ── GENERATE
 async function genSelected(){
-  if(!gkey){ toast('Configurez votre clé Groq','err'); openSetup(); return; }
-  if(!cvTxt){ toast('Uploadez votre CV d\'abord','err'); openSetup(); return; }
+  if(!getKey()){ toast('Clé Groq indisponible — mode démo ou reconnectez-vous','err'); return; }
+  if(!cvTxt){ toast('Uploadez votre CV d\'abord','err'); return; }
   // Mode démo : 1 seule génération autorisée
   if(isDemo && results.length >= 1){
     toast('Mode démo — 1 candidature max · Connectez-vous pour plus','info');
@@ -1532,8 +1535,8 @@ Candidature ${job.title} — [Prénom NOM]
 
 
 async function genSelected(){
-  if(!gkey){ toast('Configurez votre clé Groq','err'); openSetup(); return; }
-  if(!cvTxt){ toast('Uploadez votre CV d\'abord','err'); openSetup(); return; }
+  if(!getKey()){ toast('Clé Groq indisponible — mode démo ou reconnectez-vous','err'); return; }
+  if(!cvTxt){ toast('Uploadez votre CV d\'abord','err'); return; }
   // Mode démo : 1 seule génération autorisée
   if(isDemo && results.length >= 1){
     const b = document.getElementById('loginov');
@@ -1756,7 +1759,7 @@ function copyLetter(id){
 async function lucyAnalyze() {
   const input = document.getElementById('lucyInput').value.trim();
   if (!input) { toast('Collez une offre ou décrivez le poste','err'); return; }
-  if (!gkey)  { toast('Clé Groq requise — ⚙ Config','err'); return; }
+  if (!getKey()) { toast('Clé Groq indisponible','err'); return; }
   if (!cvTxt) { toast('Uploadez votre CV d\'abord','err'); return; }
 
   const btn=document.getElementById('lucyBtn'), sp=document.getElementById('lucySp');

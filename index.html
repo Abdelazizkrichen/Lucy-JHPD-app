@@ -1652,74 +1652,111 @@ async function lucyAnalyze() {
   const input = document.getElementById('lucyInput').value.trim();
   if (!input) { toast('Collez une offre ou décrivez le poste','err'); return; }
   if (!gkey)  { toast('Clé Groq requise — ⚙ Config','err'); return; }
-  if (!cvTxt) { toast('Uploadez votre CV d'abord','err'); return; }
+  if (!cvTxt) { toast('Uploadez votre CV d\'abord','err'); return; }
 
-  const btn = document.getElementById('lucyBtn');
-  const sp  = document.getElementById('lucySp');
+  const btn=document.getElementById('lucyBtn'), sp=document.getElementById('lucySp');
   btn.disabled=true; sp.classList.add('on');
-  document.getElementById('lucyResult').innerHTML = '<div style="color:var(--m);font-size:12px;padding:16px;text-align:center">Lucy analyse votre profil et l'offre...</div>';
+  document.getElementById('lucyResult').innerHTML = '<div style="padding:20px;text-align:center;color:var(--m);font-size:12px">✦ Lucy analyse votre profil...</div>';
 
   const p = userProfile || {};
-  const linkedin = p.linkedin || '';
 
-  const systemPrompt = `Tu es Lucy, une Career Manager IA d'élite dédiée au candidat décrit dans le CV fourni.
-Tu opères comme une consultante senior en recrutement avec 20 ans d'expertise.
-Ton style : direct, honnête, zéro flatterie, zéro hallucination, phrases courtes et percutantes.
-Tu réponds TOUJOURS en français.
-JAMAIS d'inventions — utilise uniquement ce qui est dans le CV fourni.
-Tu dois maximiser les chances du candidat sur chaque opportunité.`;
+  const LUCY_SYSTEM = `Tu es Lucy, une Career Manager IA d\'élite dédiée exclusivement au candidat décrit dans le CV fourni.
 
-  const userPrompt = `CV DU CANDIDAT:
-${cvTxt.substring(0,3000)}
+Tu opères comme une consultante senior en recrutement avec 20 ans d\'expertise dans :
+- Le marché tech et digital français (Paris / Île-de-France)
+- L\'optimisation ATS, le positionnement exécutif, le personal branding
+- La dynamique des cabinets de recrutement et des ESN
 
-OFFRE / POSTE CIBLÉ:
-${input.substring(0,1500)}
+PERSONNALITÉ & RÈGLES ABSOLUES :
+- Direct. Honnête. Zéro flatterie. Zéro hallucination.
+- Tu parles comme un conseiller senior de confiance, pas comme un chatbot.
+- Si quelque chose est faible dans le profil ou la stratégie → tu le dis clairement avec une meilleure alternative.
+- Phrases courtes, percutantes. Rapport signal/bruit maximum.
+- Tu réponds TOUJOURS en français.
+- Tu ne inventes JAMAIS de données de marché, salaires ou tendances tech.
+- Tu n\'utilises JAMAIS les infos du CV pour autre chose que la mission en cours.
+- JAMAIS de phrases génériques : "bonne question", "certainement", "je serais ravi de"
+- Tu utilises UNIQUEMENT ce qui est dans le CV fourni — aucune invention.
 
-Analyse cette opportunité et fournis dans cet ordre:
+PROTOCOLE ANTI-HALLUCINATION :
+- Ne jamais inventer de chiffres de performance, KPIs ou résultats non mentionnés dans le CV.
+- Si une métrique manque → demander : "Quelle était la taille de l\'équipe ? La vélocité ? Le nombre d\'US livrées ?"
+- Si incertain → dire "Je ne suis pas certain, basé sur le CV disponible..."
 
-**1. VERDICT** (2 lignes max)
-Score de correspondance XX% — vert/orange/rouge — raison principale.
+CV DU CANDIDAT :
+${cvTxt.substring(0, 4000)}
 
-**2. MATCH TABLE**
-| Dimension | Requis | Candidat | Match |
-(4-5 lignes max, les plus importantes)
+Tu dois traiter ce CV comme la seule source de vérité sur le candidat.`;
 
-**3. LETTRE DE MOTIVATION** (style elevator speech, 4 paragraphes courts)
-- Hook sur l'entreprise/poste (1 phrase)
-- 2 réalisations chiffrées du CV pertinentes (2-3 lignes)
-- Pourquoi CE poste (2 lignes)
-- Disponibilité${linkedin ? ' + ' + linkedin : ''}
-Pas de "je suis motivé", "passionné", "je me permets de". Pas de mention de CV joint.
+  const userPrompt = `OFFRE / POSTE CIBLÉ :
+${input.substring(0, 2000)}
 
-**4. 3 POINTS CLÉS À VALORISER EN ENTRETIEN**
-(bullet points courts, basés sur le CV réel)
+Exécute l\'analyse complète suivante :
 
-**5. 1 POINT DE VIGILANCE**
-(ce qui pourrait bloquer la candidature)`;
+## 1. VERDICT RAPIDE
+2 lignes max. Score XX% — Vert/Orange/Rouge. Raison principale.
+
+## 2. SCORECARD DE MATCH
+| Dimension | Offre requiert | Candidat a | Match |
+|---|---|---|---|
+[5 dimensions max, les plus critiques pour CE poste]
+**GLOBAL : XX%**
+
+## 3. LETTRE DE MOTIVATION
+Style elevator speech — 4 paragraphes COURTS (3-4 lignes chacun) :
+- **Hook** : 1 phrase sur l\'entreprise ou le poste spécifique (pas "je me permets de vous contacter")
+- **Valeur** : 2 réalisations chiffrées réelles du CV, directement liées à ce poste
+- **Pourquoi CE poste** : lien concret entre le parcours du candidat et cette opportunité précise
+- **Clôture** : disponibilité + LinkedIn si disponible dans le CV
+Pas de "je suis motivé/passionné". Pas de mention de CV joint ou de pièce jointe.
+
+## 4. 3 POINTS CLÉS À VALORISER EN ENTRETIEN
+Bullet points courts, basés uniquement sur le CV réel et pertinents pour CE poste.
+
+## 5. 1 POINT DE VIGILANCE
+Ce qui pourrait bloquer la candidature — soyez direct.
+
+## 6. NEXT ACTION
+Une seule action concrète et prioritaire que le candidat doit faire maintenant.`;
 
   try {
     const result = await groq([
-      {role:'system', content: systemPrompt},
+      {role:'system', content: LUCY_SYSTEM},
       {role:'user',   content: userPrompt}
-    ], 2000, 0.5);
+    ], 2500, 0.4);
+
+    // Formatter le markdown basique
+    const formatted = result
+      .replace(/^## (.*?)$/gm, '<div style="font-size:13px;font-weight:700;color:var(--a);margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--b)">$1</div>')
+      .replace(/^### (.*?)$/gm, '<div style="font-size:12px;font-weight:600;color:var(--t);margin:10px 0 5px">$1</div>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^\| .*/gm, m => `<div style="font-size:10px;color:var(--m);padding:2px 0;font-family:\'Space Mono\',monospace">${m}</div>`)
+      .replace(/^- (.*?)$/gm, '<div style="padding:3px 0 3px 12px;border-left:2px solid var(--b);margin:2px 0;font-size:12px">$1</div>')
+      .replace(/^\*\* (.*?)$/gm, '<div style="padding:3px 0 3px 12px;border-left:2px solid var(--b);margin:2px 0;font-size:12px">$1</div>')
+      .replace(/\n\n/g, '<br>')
+      .replace(/\n/g, '<br>');
 
     document.getElementById('lucyResult').innerHTML = `
-      <div style="background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:16px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--b)">
-          <span style="font-size:16px">✦</span>
-          <strong style="font-size:12px;color:var(--a)">Analyse Lucy</strong>
+      <div style="background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:18px;margin-top:4px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="color:var(--a);font-size:14px">✦</span>
+          <strong style="font-size:12px;color:var(--a);font-family:\'Space Mono\',monospace">LUCY — Analyse candidature</strong>
           <span style="font-size:10px;color:var(--m);margin-left:auto">${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>
         </div>
-        <div style="font-size:12px;line-height:1.8;color:var(--t);white-space:pre-wrap">${result.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\|(.*)\|/g, (m)=>'<code style="display:block;padding:4px 0;font-size:10px;color:var(--m)">'+m+'</code>')}</div>
-        <div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--b)">
-          <button onclick="navigator.clipboard.writeText(document.getElementById('lucyResult').innerText).then(()=>toast('Copié','ok'))" style="padding:6px 12px;border-radius:6px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer">⎘ Copier</button>
-          <button onclick="lucyAnalyze()" style="padding:6px 12px;border-radius:6px;border:1px solid var(--a);background:var(--ag);color:var(--a);font-size:11px;cursor:pointer">↺ Relancer</button>
+        <div style="font-size:12px;line-height:1.8;color:var(--t)">${formatted}</div>
+        <div style="display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--b);flex-wrap:wrap">
+          <button onclick="navigator.clipboard.writeText(document.getElementById(\'lucyResult\').innerText).then(()=>toast(\'Copié ✓\',\'ok\'))"
+            style="padding:6px 12px;border-radius:6px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer">⎘ Copier</button>
+          <button onclick="document.getElementById(\'lucyInput\').value=\'\';document.getElementById(\'lucyResult\').innerHTML=\'\'"
+            style="padding:6px 12px;border-radius:6px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:11px;cursor:pointer">✕ Effacer</button>
+          <button onclick="lucyAnalyze()"
+            style="padding:6px 14px;border-radius:6px;border:1px solid var(--a);background:var(--ag);color:var(--a);font-size:11px;cursor:pointer">↺ Relancer</button>
         </div>
       </div>`;
     toast('✦ Analyse Lucy prête','ok');
   } catch(e) {
     document.getElementById('lucyResult').innerHTML = `<div style="color:var(--r);font-size:12px;padding:12px">${e.message}</div>`;
-    toast('Erreur Lucy: '+e.message,'err');
+    toast('Erreur: '+e.message,'err');
   } finally {
     btn.disabled=false; sp.classList.remove('on');
   }

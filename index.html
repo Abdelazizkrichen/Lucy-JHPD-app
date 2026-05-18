@@ -698,6 +698,8 @@ input[type=file]{display:none}
 <div class="toasts" id="toasts"></div>
 
 <script>
+
+
 // ── CHIPS CONTRAT (écran d'accueil)
 let selectedContracts = []; // vide = tous
 
@@ -1019,6 +1021,31 @@ async function syncResult(r) {
 }
 
 // ── INIT
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  if (newTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme','dark');
+    document.getElementById('themeBtn').textContent='🌙';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('themeBtn').textContent='☀️';
+  }
+  localStorage.setItem('lj_theme', newTheme);
+}
+
+function applyTheme() {
+  const saved = localStorage.getItem('lj_theme') || 'light';
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme','dark');
+    const btn=document.getElementById('themeBtn'); if(btn) btn.textContent='🌙';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    const btn=document.getElementById('themeBtn'); if(btn) btn.textContent='☀️';
+  }
+}
+
 async function init() {
   applyTheme();
   // Toujours montrer l'écran d'accueil en premier

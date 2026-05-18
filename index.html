@@ -799,6 +799,8 @@ async function initSupabase() {
   try {
     const res  = await fetch('/api/config');
     const cfg  = await res.json();
+    // Stocker la clé démo (jamais exposée dans le code)
+    if (cfg.groq_demo_key) window._groqDemoKey = cfg.groq_demo_key;
     if (!cfg.supabase_url || !cfg.supabase_anon_key) {
       showLoginError('Variables SUPABASE_URL / SUPABASE_ANON_KEY manquantes dans Vercel.');
       return;
@@ -887,7 +889,12 @@ function startDemo() {
   // Onglet Lucy : visible seulement si connecté
   const lucyTab = document.getElementById('tabLucy');
   if(lucyTab) lucyTab.style.display = (!isDemo) ? 'flex' : 'none';
-  if (!gkey || !cvTxt) { openSetup(); return; }
+  // En mode démo : clé démo fournie par serveur, pas besoin de config
+  const hasKey = gkey || (isDemo && window._groqDemoKey);
+  if (!hasKey || !cvTxt) {
+    if (isDemo && !cvTxt) return; // CV uploadé dans l'écran d'accueil
+    if (!isDemo) { openSetup(); return; }
+  }
   updCvStatus(); render(); updBadge(); renderReady();
   if (jobs.length === 0) scrape();
 }
@@ -1048,6 +1055,8 @@ function updCvStatus() {
 function openSetup() {
   // Ne jamais ouvrir config si login pas encore fait
   if (!document.getElementById('loginov').classList.contains('hide')) return;
+  // Ne pas ouvrir config en mode démo
+  if (isDemo) { toast('Connectez-vous pour configurer votre propre clé Groq','info'); return; }
   document.getElementById('mkey').value = gkey;
   if (cvTxt) {
     document.getElementById('cvdh').textContent = '✓ CV chargé';
@@ -1196,8 +1205,10 @@ async function scoreOne(job) {
 
 // ── GROQ
 async function groq(messages,maxTokens=1500,temp=0.65,retry=0) {
+  const key = gkey || (isDemo && window._groqDemoKey ? window._groqDemoKey : '');
+  if (!key) throw new Error('Clé Groq manquante — configurez votre clé dans ⚙ Config');
   const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+gkey},
+    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
     body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:maxTokens,temperature:temp,messages})
   });
   if(res.status===429){
@@ -1326,9 +1337,8 @@ async function genSelected(){
   if(!cvTxt){ toast('Uploadez votre CV d\'abord','err'); openSetup(); return; }
   // Mode démo : 1 seule génération autorisée
   if(isDemo && results.length >= 1){
-    const b = document.getElementById('loginov');
-    document.getElementById('loginov').classList.remove('hide');
-    toast('Mode démo — connectez-vous pour générer plusieurs candidatures','info');
+    toast('Mode démo — 1 candidature max · Connectez-vous pour plus','info');
+    setTimeout(()=>document.getElementById('loginov').classList.remove('hide'),1500);
     return;
   }
   const ids=[...sel]; sel.clear(); updSel();

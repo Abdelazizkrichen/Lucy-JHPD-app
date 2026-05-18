@@ -374,7 +374,7 @@ input[type=file]{display:none}
     <div class="tab" id="tabArch"  onclick="showTab('arch')">📦 Archives</div>
     <div class="tab" id="tabStats" onclick="showTab('stats')">📊 Stats</div>
     <div class="tsp"></div>
-    <div class="tab" id="tabLucy" onclick="showTab('lucy')" style="display:none">✦ Lucy IA</div>
+    <div class="tab" id="tabLucy" onclick="showTab('lucy')">💬 Lucy IA</div>
   </div>
 
   <div class="view on" id="viewJobs">
@@ -901,7 +901,7 @@ function startDemo() {
   // En démo: on peut utiliser si CV uploadé sinon on ouvre config
   // Onglet Lucy : visible seulement si connecté
   const lucyTab = document.getElementById('tabLucy');
-  if(lucyTab) lucyTab.style.display = (!isDemo) ? 'flex' : 'none';
+  if(lucyTab) lucyTab.style.display = 'flex'; // visible toujours (démo = analyse OK, pas de sauvegarde)
   // En mode démo : clé démo fournie par serveur, pas besoin de config
   const hasKey = gkey || (isDemo && window._groqDemoKey);
   if (!hasKey || !cvTxt) {
@@ -1300,8 +1300,8 @@ async function scoreOne(job) {
 
 // ── GROQ
 async function groq(messages,maxTokens=1500,temp=0.65,retry=0) {
-  const _dk = window._groqDemoKey || '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';
-  const key = gkey || (isDemo ? _dk : '');
+  // Priorité : clé user → clé démo Vercel → erreur
+  const key = gkey || (isDemo ? (window._groqDemoKey || '') : '');
   if (!key) throw new Error('Clé Groq manquante — configurez votre clé dans ⚙ Config');
   const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
     method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
@@ -1764,6 +1764,9 @@ async function lucyAnalyze() {
   document.getElementById('lucyResult').innerHTML = '<div style="padding:20px;text-align:center;color:var(--m);font-size:12px">✦ Lucy analyse votre profil...</div>';
 
   const p = userProfile || {};
+
+  // En mode démo : analyse disponible, résultats non sauvegardés
+  if (isDemo) toast('Mode démo — analyse disponible, non sauvegardée','info');
 
   const LUCY_SYSTEM = `Tu es Lucy, une Career Manager IA d\'élite dédiée exclusivement au candidat décrit dans le CV fourni.
 

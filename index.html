@@ -352,7 +352,7 @@ input[type=file]{display:none}
   <div style="flex:1"></div>
   <button onclick="document.getElementById('loginov').classList.remove('hide')" style="padding:4px 12px;border-radius:5px;border:1px solid var(--a);background:var(--a);color:#fff;font-size:10px;cursor:pointer;font-family:'Space Mono',monospace">Se connecter →</button>
 </div>
-<div class="demo-banner hide" id="demoBanner" style="background:rgba(108,99,255,.1);border-bottom:1px solid rgba(108,99,255,.3);padding:8px 20px;font-size:11px;color:var(--a);display:flex;align-items:center;gap:10px;flex-shrink:0">
+<div id="demoBanner" style="display:none" style="background:rgba(108,99,255,.1);border-bottom:1px solid rgba(108,99,255,.3);padding:8px 20px;font-size:11px;color:var(--a);display:flex;align-items:center;gap:10px;flex-shrink:0">
   ✦ <strong>Mode démo</strong> — 10 offres · 1 génération · Vos données non sauvegardées.
   <span style="color:var(--t)">Connectez-vous pour accéder à toutes les fonctionnalités et sauvegarder vos candidatures.</span>
   <div style="flex:1"></div>
@@ -379,6 +379,7 @@ input[type=file]{display:none}
 
   <div class="view on" id="viewJobs">
     <div class="toolbar">
+      <div id="ctBadge" style="display:none;font-size:10px;font-family:'Space Mono',monospace;color:var(--a);padding:3px 8px;border-radius:10px;background:var(--ag);border:1px solid rgba(108,99,255,.3);white-space:nowrap"></div>
       <button class="scrpbtn" id="scrpbtn" onclick="scrape()">
         <div class="sp" id="scrpsp"></div>
         <span id="scrptxt">↻ Rechercher</span>
@@ -402,16 +403,7 @@ input[type=file]{display:none}
         <option value="CCE">Alternance</option>
         <option value="DIN">Prof.</option>
       </select>
-      <!-- Filtre type contrat -->
-      <select class="scsel" id="ctsel" multiple size="1" title="Type de contrat" style="min-width:110px">
-        <option value="CDI" selected>CDI</option>
-        <option value="CDD">CDD</option>
-        <option value="freelance">Freelance</option>
-        <option value="stage">Stage</option>
-        <option value="alternance">Alternance</option>
-        <option value="professionalisation">Professionnalisation</option>
-        <option value="POEI">POEI</option>
-      </select>
+
       <button class="selbtn" onclick="selAll()">☐ Tout</button>
       <button class="resetbtn" onclick="confirmReset()" title="Vider les offres">🗑</button>
       <button class="genbtn" id="genbtn" onclick="genSelected()">
@@ -496,50 +488,87 @@ input[type=file]{display:none}
   </div>
 </div>
 
-<!-- LOGIN -->
-<div class="ov hide" id="loginov">
-  <div class="modal" style="max-width:370px">
-    <div id="loginForm" style="text-align:center">
-      <div style="font-size:36px;margin-bottom:12px">✦</div>
-      <h2 style="margin-bottom:6px">Lucy Job Hunter</h2>
-      <p class="sub">Entrez votre email pour vous connecter et synchroniser vos données sur tous vos appareils.</p>
-      <div class="mf" style="text-align:left">
-        <label>Votre email</label>
-        <input type="email" id="loginEmail" placeholder="vous@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()">
+<!-- ÉCRAN D'ACCUEIL (démo + login) -->
+<div class="ov" id="loginov">
+  <div class="modal" style="max-width:480px">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:32px;margin-bottom:8px">✦</div>
+      <h2 style="margin-bottom:4px;font-size:16px">Lucy Job Hunter</h2>
+      <p style="font-size:11px;color:var(--m);line-height:1.6">Trouvez les offres adaptées à votre profil · Générez vos candidatures avec l'IA</p>
+    </div>
+
+    <!-- ÉTAPE 1 : CV -->
+    <div style="margin-bottom:14px">
+      <div class="msec" style="margin-bottom:8px">1 — Votre CV</div>
+      <div class="cvdrop" id="cvdrop2"
+           onclick="document.getElementById('cvf2').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="dropCv2(event)">
+        <div class="ico">📄</div>
+        <h3 id="cvdh2">Déposez votre CV PDF</h3>
+        <p id="cvds2">ou cliquez pour choisir · extrait localement, jamais envoyé</p>
       </div>
-      <div class="mrow">
-        <button class="mbtn p" id="loginBtn" onclick="sendMagicLink()" style="display:flex;align-items:center;justify-content:center;gap:8px">
-          <span id="loginSp" class="sp"></span>Recevoir le lien →
+      <input type="file" id="cvf2" accept=".pdf" onchange="loadCvFile2(event)">
+      <div class="pbar" id="pbar2"><div class="pbar-inner" id="pbari2" style="width:0%"></div></div>
+    </div>
+
+    <!-- ÉTAPE 2 : Type de contrat -->
+    <div style="margin-bottom:16px">
+      <div class="msec" style="margin-bottom:8px">2 — Type de contrat <span style="font-weight:400;text-transform:none;color:var(--m)">(max 3 · vide = tous)</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px" id="ctChips">
+        <div class="chip" data-ct="CDI" onclick="toggleCt(this)">CDI</div>
+        <div class="chip" data-ct="CDD" onclick="toggleCt(this)">CDD</div>
+        <div class="chip" data-ct="freelance" onclick="toggleCt(this)">Freelance</div>
+        <div class="chip" data-ct="stage" onclick="toggleCt(this)">Stage</div>
+        <div class="chip" data-ct="alternance" onclick="toggleCt(this)">Alternance</div>
+        <div class="chip" data-ct="professionalisation" onclick="toggleCt(this)">Professionnalisation</div>
+        <div class="chip" data-ct="POEI" onclick="toggleCt(this)">POEI</div>
+      </div>
+    </div>
+
+    <!-- CTA principal -->
+    <button id="startBtn" onclick="startDemo()" disabled
+      style="width:100%;padding:13px;border-radius:8px;border:none;background:var(--a);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;opacity:.4;display:flex;align-items:center;justify-content:center;gap:8px">
+      <span id="startSp" class="sp"></span>
+      ✦ Rechercher les offres
+    </button>
+
+    <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--m)">
+      Mode démo · 10 offres · 1 génération
+    </div>
+
+    <!-- Séparateur -->
+    <div style="display:flex;align-items:center;gap:8px;margin:14px 0">
+      <div style="flex:1;height:1px;background:var(--b)"></div>
+      <span style="font-size:10px;color:var(--m);font-family:'Space Mono',monospace">ou</span>
+      <div style="flex:1;height:1px;background:var(--b)"></div>
+    </div>
+
+    <!-- Login pour sauvegarder -->
+    <div id="loginSection">
+      <p style="font-size:11px;color:var(--m);text-align:center;margin-bottom:10px">Connectez-vous pour sauvegarder vos candidatures et accéder à toutes les fonctionnalités</p>
+      <div id="loginForm">
+        <div class="mf">
+          <input type="email" id="loginEmail" placeholder="votre@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()">
+        </div>
+        <button onclick="sendMagicLink()" id="loginBtn" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--b);background:var(--s2);color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color .2s" onmouseover="this.style.borderColor='var(--a)'" onmouseout="this.style.borderColor='var(--b)'">
+          <span id="loginSp" class="sp"></span>✉ Recevoir un lien de connexion
+        </button>
+        <button onclick="signInGoogle()" style="width:100%;margin-top:7px;padding:10px;border-radius:8px;border:1px solid var(--b);background:var(--s2);color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor='var(--a)'" onmouseout="this.style.borderColor='var(--b)'">
+          <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.4 30.2 0 24 0 14.8 0 6.9 5.4 3 13.3l7.8 6C12.8 13.1 17.9 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v8.7h12.4c-.5 2.8-2.1 5.2-4.5 6.8l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.4z"/><path fill="#FBBC05" d="M10.8 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.7l8.3-6z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.1-5.5c-2 1.4-4.6 2.2-8.1 2.2-6.1 0-11.2-3.6-13.2-9l-8.3 6C6.9 42.6 14.8 48 24 48z"/></svg>
+          Continuer avec Google
         </button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin:10px 0">
-        <div style="flex:1;height:1px;background:var(--b)"></div>
-        <span style="font-size:10px;color:var(--m);font-family:'Space Mono',monospace">ou</span>
-        <div style="flex:1;height:1px;background:var(--b)"></div>
+      <div id="loginConfirm" style="display:none;text-align:center;padding:10px 0">
+        <div style="font-size:24px;margin-bottom:8px">📨</div>
+        <p style="font-size:12px;color:var(--m)">Lien envoyé ! Vérifiez votre boîte mail.</p>
       </div>
-      <button onclick="signInGoogle()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--b);background:var(--s2);color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s" onmouseover="this.style.borderColor='var(--a)'" onmouseout="this.style.borderColor='var(--b)'">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.4 30.2 0 24 0 14.8 0 6.9 5.4 3 13.3l7.8 6C12.8 13.1 17.9 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v8.7h12.4c-.5 2.8-2.1 5.2-4.5 6.8l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.4z"/><path fill="#FBBC05" d="M10.8 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.7l8.3-6z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.1-5.5c-2 1.4-4.6 2.2-8.1 2.2-6.1 0-11.2-3.6-13.2-9l-8.3 6C6.9 42.6 14.8 48 24 48z"/></svg>
-        Continuer avec Google
-      </button>
-      <p style="font-size:10px;color:var(--m);margin-top:10px;text-align:center">Magic link valable 1 heure · Aucun mot de passe</p>
-      <div style="text-align:center;margin-top:12px">
-        <span onclick="enterDemoMode()" style="font-size:11px;color:var(--m);cursor:pointer;text-decoration:underline;text-underline-offset:2px">Essayer sans compte (mode démo limité)</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin:10px 0 4px">
-        <div style="flex:1;height:1px;background:var(--b)"></div>
-        <span style="font-size:10px;color:var(--m);font-family:'Space Mono',monospace">ou</span>
-        <div style="flex:1;height:1px;background:var(--b)"></div>
-      </div>
-      <button onclick="startDemo()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--b);background:transparent;color:var(--m);font-family:'Space Grotesk',sans-serif;font-size:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--a)';this.style.color='var(--a)'" onmouseout="this.style.borderColor='var(--b)';this.style.color='var(--m)'">
-        Essayer sans compte →
-      </button>
-      <p style="font-size:9px;color:var(--m);text-align:center;margin-top:6px;opacity:.7">Mode démo · 1 génération · données non sauvegardées</p>
     </div>
-    <div id="loginConfirm" style="text-align:center;display:none">
-      <div style="font-size:32px;margin-bottom:10px">📨</div>
-      <h2 style="margin-bottom:8px">Lien envoyé !</h2>
-      <p class="sub">Vérifiez votre boîte mail et cliquez sur le lien pour vous connecter. Vous pouvez fermer cette fenêtre.</p>
-    </div>
+
+    <div id="loginError" style="display:none;margin-top:10px;padding:8px 12px;background:rgba(255,79,109,.06);border:1px solid rgba(255,79,109,.2);border-radius:6px;font-size:11px;color:var(--r)"></div>
   </div>
 </div>
 
@@ -669,6 +698,83 @@ input[type=file]{display:none}
 <div class="toasts" id="toasts"></div>
 
 <script>
+// ── CHIPS CONTRAT (écran d'accueil)
+let selectedContracts = []; // vide = tous
+
+function toggleCt(el) {
+  const ct = el.dataset.ct;
+  if (el.classList.contains('on')) {
+    el.classList.remove('on');
+    selectedContracts = selectedContracts.filter(c=>c!==ct);
+  } else {
+    if (selectedContracts.length >= 3) { toast('Maximum 3 types de contrat','info'); return; }
+    el.classList.add('on');
+    selectedContracts.push(ct);
+  }
+  updateCtBadge();
+}
+
+function updateCtBadge() {
+  const b = document.getElementById('ctBadge');
+  if (!b) return;
+  if (selectedContracts.length === 0) { b.style.display='none'; return; }
+  b.style.display='inline-block';
+  b.textContent = selectedContracts.join(' · ');
+}
+
+// CV upload depuis l'écran d'accueil
+function dropCv2(e) {
+  e.preventDefault(); document.getElementById('cvdrop2').classList.remove('drag');
+  const f=e.dataTransfer.files[0]; if(f&&f.type==='application/pdf') extractPdf2(f);
+}
+function loadCvFile2(e) { const f=e.target.files[0]; if(f) extractPdf2(f); }
+
+async function extractPdf2(file) {
+  document.getElementById('cvds2').textContent='Extraction...';
+  document.getElementById('pbar2').classList.add('show');
+  try {
+    const ab=await file.arrayBuffer();
+    cvB64=arrayBufferToBase64(ab); localStorage.setItem('lj_b',cvB64);
+    const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+    let txt=''; const total=pdf.numPages;
+    for(let i=1;i<=total;i++){
+      const pg=await pdf.getPage(i); const c=await pg.getTextContent();
+      txt+=c.items.map(s=>s.str).join(' ')+'
+';
+      document.getElementById('pbari2').style.width=(i/total*100)+'%';
+    }
+    cvTxt=txt.trim(); localStorage.setItem('lj_cv',cvTxt);
+    userProfile=null; localStorage.removeItem('lj_profile');
+    document.getElementById('cvdh2').textContent='✓ '+file.name;
+    document.getElementById('cvds2').textContent=cvTxt.length+' caractères · Prêt';
+    document.getElementById('cvdrop2').classList.add('ok');
+    document.getElementById('pbar2').classList.remove('show');
+    document.getElementById('startBtn').disabled=false;
+    document.getElementById('startBtn').style.opacity='1';
+    toast('CV chargé ✓','ok');
+  } catch(e) {
+    document.getElementById('cvds2').textContent='Erreur: '+e.message;
+    toast('Erreur PDF','err');
+  }
+}
+
+// Lancer en mode démo (sans login)
+async function startDemo() {
+  if (!cvTxt) { toast('Uploadez votre CV d'abord','err'); return; }
+  const btn=document.getElementById('startBtn'), sp=document.getElementById('startSp');
+  btn.disabled=true; sp.classList.add('on');
+  isDemo=true;
+  // Afficher bannière démo
+  const db=document.getElementById('demoBanner');
+  if(db) db.style.display='flex';
+  // Fermer l'écran d'accueil
+  document.getElementById('loginov').classList.add('hide');
+  // Lancer le dashboard
+  continueInit();
+  btn.disabled=false; sp.classList.remove('on');
+}
+
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 // ── STATE
@@ -748,20 +854,14 @@ async function initSupabase() {
 }
 
 function showLoginError(msg) {
-  const f = document.getElementById('loginForm');
-  if (f) f.innerHTML = `
-    <div style="text-align:center">
-      <div style="font-size:32px;margin-bottom:10px">⚠️</div>
-      <h2 style="margin-bottom:8px;color:var(--r);font-size:14px">Erreur serveur</h2>
-      <p style="font-size:12px;color:var(--m);line-height:1.7">${msg}</p>
-      <button onclick="enterDemoMode()" style="margin-top:14px;width:100%;padding:10px;border-radius:8px;border:1px solid var(--b);background:var(--s2);color:var(--t);font-size:13px;cursor:pointer">Continuer en mode démo →</button>
-    </div>`;
+  const el=document.getElementById('loginError');
+  if(el){ el.style.display='block'; el.textContent=msg; }
 }
 
 function enterDemoMode() {
   isDemo = true;
   document.getElementById('loginov').classList.add('hide');
-  document.getElementById('demoBanner').style.display = 'flex';
+  const db=document.getElementById('demoBanner'); if(db) db.style.display='flex';
   continueInit();
 }
 
@@ -914,9 +1014,13 @@ async function syncResult(r) {
 
 // ── INIT
 async function init() {
-  // Afficher le login en PREMIER
+  applyTheme();
+  // Toujours montrer l'écran d'accueil en premier
   document.getElementById('loginov').classList.remove('hide');
+  // Initialiser Supabase en arrière-plan
   await initSupabase();
+  // Si session active → continueInit() sera appelé par initSupabase
+  // Sinon → l'écran d'accueil reste affiché
 }
 
 function continueInit() {
@@ -1058,8 +1162,8 @@ async function scrape() {
     }
     txt.textContent='Recherche...';
     toast('🔍 Recherche : '+kw.slice(0,3).join(', ')+(kw.length>3?' ...':''),'info');
-    const ctSel = document.getElementById('ctsel');
-    const cts = ctSel ? [...ctSel.selectedOptions].map(o=>o.value).join(',') : 'CDI';
+    // Contrats sélectionnés (depuis chips écran d'accueil ou toolbar)
+    const cts = selectedContracts.length > 0 ? selectedContracts.join(',') : 'CDI,CDD,freelance,stage,alternance,professionalisation,POEI';
     const url = '/api/jobs?kw='+encodeURIComponent(kw.join(','))+'&ct='+encodeURIComponent(cts);
     const r=await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
@@ -1785,8 +1889,14 @@ function showTab(t){
     document.getElementById('tab'+cap)?.classList.toggle('on',v===t);
   });
   if(t==='ready') renderReady();
-  if(t==='arch')  renderArchives();
-  if(t==='stats') renderStats();
+  if(t==='arch'){
+    if(isDemo){ toast('Connectez-vous pour accéder aux archives','info'); showTab('jobs'); return; }
+    renderArchives();
+  }
+  if(t==='stats'){
+    if(isDemo){ toast('Connectez-vous pour accéder aux statistiques','info'); showTab('jobs'); return; }
+    renderStats();
+  }
 }
 
 function updateContracts(){

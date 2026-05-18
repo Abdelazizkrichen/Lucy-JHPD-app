@@ -167,17 +167,28 @@ class handler(BaseHTTPRequestHandler):
         # ── FILTRE PERTINENCE ─────────────────────────────────────
         # Garder seulement les offres où au moins 1 keyword apparaît
         # dans le titre OU les 300 premiers chars de description
+        # Mots trop génériques — présents partout, ignorés pour le filtre
+        GENERIC_WORDS = {'agile','scrum','kanban','digital','web','data','it',
+                         'informatique','logiciel','software','cloud','tech'}
+
         def is_relevant(job, kws):
             title = job.get('title','').lower()
-            desc  = job.get('description','')[:300].lower()
+            desc  = job.get('description','')[:500].lower()
             for kw in kws:
                 kw_low = kw.lower().strip()
-                if len(kw_low) < 3: continue
-                # Vérifier chaque mot du keyword (ex: "QA automatisation" → "qa" et "automatisation")
-                kw_words = kw_low.split()
-                if any(w in title or w in desc for w in kw_words if len(w) > 2):
+                if len(kw_low) < 2: continue
+                kw_words = [w for w in kw_low.split() if len(w) > 2 and w not in GENERIC_WORDS]
+                if not kw_words: continue
+                # Keyword doit apparaître dans le TITRE
+                if any(w in title for w in kw_words):
                     return True
-            return False
+            # Second pass : 2 keywords distincts dans la description
+            kw_in_desc = sum(
+                1 for kw in kws
+                for w in [x for x in kw.lower().split() if len(x) > 2 and x not in GENERIC_WORDS]
+                if w in desc
+            )
+            return kw_in_desc >= 2
 
         filtered = [j for j in jobs if is_relevant(j, keywords)]
         # Si le filtre est trop strict (< 3 résultats), relaxer sur description uniquement

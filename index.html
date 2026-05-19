@@ -8,11 +8,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 :root{--bg:#f4f4f8;--s1:#ffffff;--s2:#f0f0f5;--b:#d8d8e8;--a:#5a52e8;--ag:rgba(90,82,232,.1);--g:#00a86b;--r:#e83550;--y:#d4920a;--t:#1a1a2e;--m:#888899;--shadow:0 1px 3px rgba(0,0,0,.08)}
 [data-theme="dark"]{--bg:#09090d;--s1:#111118;--s2:#16161f;--b:#1f1f2e;--a:#6c63ff;--ag:rgba(108,99,255,.12);--g:#00d68f;--r:#ff4f6d;--y:#ffb800;--t:#e2e2f0;--m:#55556a;--shadow:none}
 *{margin:0;padding:0;box-sizing:border-box}
-html{height:100%;font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--t)}
+html{height:100%;font-family:'Inter','Space Grotesk',sans-serif;background:var(--bg);color:var(--t);-webkit-font-smoothing:antialiased}
 body{height:100%;display:flex;flex-direction:column;overflow:hidden}
 /* Sur mobile, on autorise le scroll natif dans les zones scrollables */
 @media(max-width:768px){
@@ -432,27 +432,6 @@ input[type=file]{display:none}
 
   <!-- LUCY IA CHAT -->
   <div class="view" id="viewLucy">
-    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;height:100%">
-      <div id="lucyMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px">
-        <div id="lucyWelcome" style="text-align:center;padding:24px 16px;color:var(--m)">
-          <div style="font-size:32px;margin-bottom:10px">✦</div>
-          <div style="font-size:14px;font-weight:700;color:var(--t);margin-bottom:6px">Lucy — Career Manager IA</div>
-          <div style="font-size:12px;line-height:1.7;max-width:340px;margin:0 auto">Stratège carrière personnelle. Analyse d'offres, positionnement marché, préparation entretiens, optimisation CV.</div>
-          <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:7px;justify-content:center" id="lucyChips">
-            <button onclick="lucyPrompt('Analyse mon profil et dis-moi mon positionnement sur le marché IDF')" class="lucy-chip">📊 Mon positionnement</button>
-            <button onclick="lucyPrompt('Quels sont les 3 axes d\'amélioration prioritaires de mon CV ?')" class="lucy-chip">📝 Améliorer mon CV</button>
-            <button onclick="lucyPrompt('Prépare-moi pour un entretien senior demain')" class="lucy-chip">🎯 Préparer entretien</button>
-            <button onclick="lucyPrompt('Tendances marché PO/PM IDF 2026 ?')" class="lucy-chip">📈 Tendances marché</button>
-          </div>
-        </div>
-      </div>
-      <div style="padding:12px 16px;border-top:1px solid var(--b);display:flex;gap:8px;background:var(--s1);flex-shrink:0">
-        <input id="lucyInput" type="text" placeholder="Posez votre question à Lucy..." style="flex:1;padding:10px 14px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none" onkeydown="if(event.key==='Enter')sendToLucy()" onfocus="this.style.borderColor='var(--a)'" onblur="this.style.borderColor='var(--b)'">
-        <button onclick="sendToLucy()" style="padding:10px 18px;border-radius:8px;border:none;background:var(--a);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px"><span id="lucySp" class="sp"></span>→</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- RESET CONFIRM -->
 <div class="ov hide" id="resetov">
@@ -694,7 +673,11 @@ input[type=file]{display:none}
 #lucyInput{width:100%;padding:11px 13px;background:var(--s2);border:1.5px solid var(--b);border-radius:10px;color:var(--t);font-family:'Space Grotesk',sans-serif;font-size:12px;line-height:1.65;resize:none;outline:none;min-height:100px;box-sizing:border-box;transition:border-color .2s}
 #lucyInput:focus{border-color:var(--a)}
 </style>
-<button id="lucyBubble" onclick="toggleLucyPanel()" title="Lucy Career Manager IA" aria-label="Ouvrir Lucy Career Manager">
+<div id="lucyHint" style="position:fixed;bottom:90px;right:24px;background:#1a1a2e;color:#fff;font-size:11px;padding:8px 14px;border-radius:10px;border:1px solid rgba(108,99,255,.4);z-index:248;display:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:'Inter',sans-serif">
+  ✦ Lucy IA — Analysez n'importe quelle offre
+  <div style="position:absolute;bottom:-6px;right:22px;width:10px;height:10px;background:#1a1a2e;border-right:1px solid rgba(108,99,255,.4);border-bottom:1px solid rgba(108,99,255,.4);transform:rotate(45deg)"></div>
+</div>
+<button id="lucyBubble" onclick="toggleLucyPanel()" title="💬 Lucy Career Manager — Analyser une offre avec l'IA" aria-label="Ouvrir Lucy Career Manager">
   ✦
   <span id="lucyBubbleDot" style="position:absolute;top:3px;right:3px;width:12px;height:12px;background:#00d68f;border-radius:50%;border:2px solid #6c63ff;display:none;font-size:7px;line-height:12px;text-align:center"></span>
 </button>
@@ -930,6 +913,14 @@ function startDemo() {
   // Lucy : bulle flottante — toujours visible
   const lucyBubble = document.getElementById('lucyBubble');
   if(lucyBubble) lucyBubble.style.display = 'flex';
+  // Afficher le hint Lucy si première visite
+  if (!localStorage.getItem('lj_lucy_hint_shown')) {
+    const hint = document.getElementById('lucyHint');
+    if (hint) {
+      hint.style.display = 'block';
+      setTimeout(() => { hint.style.display = 'none'; localStorage.setItem('lj_lucy_hint_shown','1'); }, 5000);
+    }
+  }
   // En mode démo : clé démo fournie par serveur, pas besoin de config
   const hasKey = gkey || (isDemo && window._groqDemoKey);
   if (!hasKey || !cvTxt) {
@@ -1035,7 +1026,10 @@ async function loadUserData() {
       // Sync les candidatures locales vers le nouveau compte
       for (const r of results) await syncResult(r);
     }
-    if (p || gkey) toast('Compte connecté ✓','ok');
+    if (p || gkey) {
+      toast('✓ Connecté — toutes les fonctionnalités disponibles','ok');
+      setTimeout(()=>toast('💬 Essayez Lucy IA en bas à droite pour analyser une offre','info'),2500);
+    }
   } catch(e) { console.warn('loadUserData:',e); }
 }
 
@@ -2123,7 +2117,7 @@ async function doSend(){
     const pos=(r.jobTitle||'Offre').replace(/[^a-zA-Z0-9]/g,'_').substring(0,18);
     toast('Génération PDF...','info');
     const adaptedB64=getPDFb64(r);
-    const res=await fetch('/api/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({gmail_user:gmailUser,gmail_pass:gmailPass,to,subject:r.subject,body:r.letter,cv_adapted_b64:adaptedB64,cv_adapted_name:`CV_${n}_${pos}.pdf`,cv_original_b64:cvB64,cv_original_name:`CV_${n}_complet.pdf`})});
+    const res=await fetch('/api/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({gmail_user:gmailUser,gmail_pass:gmailPass,to,subject:r.subject,body:r.letter,cv_adapted_b64:adaptedB64,cv_adapted_name:`CV_${n}_${pos}.pdf`})});
     const data=await res.json();
     if(data.ok){ setStatus(id,'sent'); toast('✉ Envoyé → '+to,'ok'); closeSendModal(); }
     else toast('Erreur: '+(data.error||'inconnue'),'err');

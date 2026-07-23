@@ -30,7 +30,8 @@ def parse_date(d):
         return None
 UA     = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/121.0 Safari/537.36"
 
-FT_CONTRACT = {"CDI":"CDI","CDD":"CDD","freelance":"MIS","stage":"STA","alternance":"CTA","professionalisation":"CPI","POEI":"CDI"}
+# Seuls typeContrat valides côté API FT : CDI, CDD, MIS (stage/alternance = natureContrat, non filtrable ici)
+FT_CONTRACT = {"CDI":"CDI","CDD":"CDD","freelance":"MIS","POEI":"CDI"}
 AZ_CONTRACT = {"CDI":"permanent","CDD":"contract","freelance":"contract","stage":"internship","alternance":"apprenticeship","professionalisation":"apprenticeship","POEI":"permanent"}
 
 _ft_cache = {"tok": None, "exp": 0}
@@ -65,18 +66,20 @@ def scrape_ft(keywords, contracts):
     jobs, seen = [], set()
     try:
         tok = ft_token()
-        ft_types = list({FT_CONTRACT[c] for c in contracts if c in FT_CONTRACT}) or ["CDI"]
+        ft_types = list({FT_CONTRACT[c] for c in contracts if c in FT_CONTRACT})
+        # Aucun type valide sélectionné (ex: stage/alternance seuls) → recherche sans filtre contrat
+        ct_params = [f"&typeContrat={ct}" for ct in ft_types[:2]] or [""]
         for kw in keywords[:3]:
-            for ct in ft_types[:2]:
+            for ctp in ct_params:
                 url = (f"https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
-                       f"?motsCles={urllib.parse.quote(kw)}&region=11&typeContrat={ct}"
+                       f"?motsCles={urllib.parse.quote(kw)}&region=11{ctp}"
                        f"&range=0-9&minCreationDate={mn}&maxCreationDate={mx}")
                 d = json.loads(fetch(url,{"Authorization":f"Bearer {tok}","Accept":"application/json"}))
                 for o in d.get("resultats",[]):
                     jid = "ft_"+o["id"]
                     if jid in seen: continue
                     seen.add(jid)
-                    jobs.append({"id":jid,"title":o.get("intitule",""),"company":o.get("entreprise",{}).get("nom","Confidentiel"),"location":o.get("lieuTravail",{}).get("libelle","IDF"),"salary":o.get("salaire",{}).get("commentaire") or o.get("salaire",{}).get("libelle","Non précisé"),"description":o.get("description","")[:800],"link":f"https://candidat.francetravail.fr/offres/recherche/detail/{o['id']}","source":"France Travail","date":o.get("dateCreation",""),"contract":o.get("typeContratLibelle",ct)})
+                    jobs.append({"id":jid,"title":o.get("intitule",""),"company":o.get("entreprise",{}).get("nom","Confidentiel"),"location":o.get("lieuTravail",{}).get("libelle","IDF"),"salary":o.get("salaire",{}).get("commentaire") or o.get("salaire",{}).get("libelle","Non précisé"),"description":o.get("description","")[:800],"link":f"https://candidat.francetravail.fr/offres/recherche/detail/{o['id']}","source":"France Travail","date":o.get("dateCreation",""),"contract":o.get("typeContratLibelle","Non précisé")})
     except Exception as e: print(f"[FT] {e}")
     return jobs
 
@@ -133,7 +136,7 @@ def scrape_jooble(keywords, contracts):
     try:
         for kw in keywords[:2]:  # limite : 500 requêtes/mois sur le plan gratuit
             body = json.dumps({"keywords": kw, "location": "Ile-de-France"}).encode()
-            d = json.loads(fetch(f"https://jooble.org/api/{JOOBLE_KEY}", {"Content-Type": "application/json"}, body))
+            d = json.loads(fetch(f"https://fr.jooble.org/api/{JOOBLE_KEY}", {"Content-Type": "application/json"}, body))
             for j in d.get("jobs", []):
                 jid = "jb_" + str(j.get("id", ""))
                 if not j.get("id") or jid in seen: continue

@@ -704,6 +704,7 @@ input[type=file]{display:none}
     <button onclick="lucyAnalyze()" id="lucyBtn" style="flex:1;padding:10px;border-radius:9px;border:none;background:linear-gradient(135deg,#6c63ff,#a855f7);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .2s">
       <span id="lucySp" class="sp"></span>✦ Analyser avec Lucy
     </button>
+    <button onclick="lucyMarket()" title="Recherche marché pour votre métier" style="padding:10px 13px;border-radius:9px;border:1px solid rgba(108,99,255,.4);background:var(--s2);color:var(--a);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(108,99,255,.1)'" onmouseout="this.style.background='var(--s2)'">📊 Marché</button>
     <button onclick="document.getElementById('lucyInput').value='';document.getElementById('lucyResult').innerHTML='';window._lucyCV=null;" style="padding:10px 13px;border-radius:9px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--r)';this.style.color='var(--r)'" onmouseout="this.style.borderColor='var(--b)';this.style.color='var(--m)'">✕</button>
   </div>
 </div>
@@ -1834,11 +1835,59 @@ function copyLetter(id){
 }
 
 // ── LUCY IA CAREER MANAGER
+function lucyConnectWall(){
+  document.getElementById('lucyResult').innerHTML = `<div style="padding:20px;text-align:center;border:1px solid rgba(108,99,255,.35);border-radius:12px;background:rgba(108,99,255,.07)">
+    <div style="font-size:24px;margin-bottom:8px">🔒</div>
+    <div style="font-size:13px;font-weight:700;color:var(--t);margin-bottom:6px">Limite du mode démo atteinte</div>
+    <div style="font-size:11px;color:var(--m);line-height:1.7;margin-bottom:14px">Le mode démo offre <strong>1 analyse Lucy</strong>. Créez un compte gratuit pour débloquer : analyses illimitées, recherche marché, sauvegarde de vos résultats et envoi de candidatures.</div>
+    <button onclick="document.getElementById('loginov').classList.remove('hide')" style="padding:11px 26px;border-radius:9px;border:none;background:linear-gradient(135deg,#6c63ff,#a855f7);color:#fff;font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 4px 16px rgba(108,99,255,.4)">Se connecter →</button>
+  </div>`;
+}
+
+async function lucyMarket() {
+  if (!getKey() && !isDemo) { toast('Clé Groq indisponible','err'); return; }
+  if (!cvTxt) { toast('Uploadez votre CV d\'abord','err'); return; }
+  if (isDemo && localStorage.getItem('lj_demo_lucy_mkt')) { lucyConnectWall(); return; }
+  const btn=document.getElementById('lucyBtn'), sp=document.getElementById('lucySp');
+  btn.disabled=true; sp.classList.add('on');
+  document.getElementById('lucyResult').innerHTML = '<div style="padding:20px;text-align:center;color:var(--m);font-size:12px">📊 Lucy analyse votre marché...</div>';
+  const sys = `Tu es Lucy — Career Manager & Strategist IA, dédiée au candidat décrit dans le CV fourni. Tu n\'as PAS accès au web : toute donnée chiffrée (salaires, TJM, volumes) est une estimation prudente à signaler comme telle, avec où la vérifier (Glassdoor, APEC, Malt). Jamais de filler. Réponds en français, format scannable (gras, listes courtes).
+
+CV DU CANDIDAT :
+${cvTxt.substring(0, 4000)}`;
+  const usr = `Fais une RECHERCHE MARCHÉ pour mon métier (déduis-le du CV) en Île-de-France :
+
+## 1. LECTURE MARCHÉ
+Demande actuelle pour ce métier, typologie d\'employeurs, 2-3 tendances de fond.
+
+## 2. FOURCHETTES
+Salaire CDI (junior/confirmé/senior) et TJM freelance — estimations prudentes, marquées "à vérifier sur Glassdoor/APEC/Malt".
+
+## 3. GAPS vs TOP 10%
+Ce qui sépare ce profil du top 10% du métier, basé uniquement sur le CV.
+
+## 4. 3 ACTIONS TACTIQUES priorisées + 1 COUP STRATÉGIQUE audacieux
+
+## 5. NEXT ACTION
+Une seule action concrète cette semaine.`;
+  try {
+    const result = await groq([{role:'system',content:sys},{role:'user',content:usr}], 1800, 0.5);
+    if (isDemo) localStorage.setItem('lj_demo_lucy_mkt','1');
+    const html = result
+      .replace(/^## (.*)$/gm,'<div style="font-size:12px;font-weight:700;color:var(--a);margin:12px 0 4px">$1</div>')
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\n/g,'<br>');
+    document.getElementById('lucyResult').innerHTML = '<div style="font-size:11.5px;line-height:1.65;color:var(--t);padding:4px 2px">'+html+'</div>';
+  } catch(e){ document.getElementById('lucyResult').innerHTML=''; toast('Lucy: '+e.message,'err'); }
+  btn.disabled=false; sp.classList.remove('on');
+}
+
 async function lucyAnalyze() {
   const input = document.getElementById('lucyInput').value.trim();
   if (!input) { toast('Collez une offre ou décrivez le poste','err'); return; }
-  if (!getKey()) { toast('Clé Groq indisponible','err'); return; }
+  if (!getKey() && !isDemo) { toast('Clé Groq indisponible','err'); return; }
   if (!cvTxt) { toast('Uploadez votre CV d\'abord','err'); return; }
+  if (isDemo && localStorage.getItem('lj_demo_lucy')) { lucyConnectWall(); return; }
 
   const btn=document.getElementById('lucyBtn'), sp=document.getElementById('lucySp');
   btn.disabled=true; sp.classList.add('on');
@@ -1849,12 +1898,15 @@ async function lucyAnalyze() {
   // En mode démo : analyse disponible, résultats non sauvegardés
   if (isDemo) toast('Mode démo — analyse disponible, non sauvegardée','info');
 
-  const LUCY_SYSTEM = `Tu es Lucy, une Career Manager IA d\'élite dédiée exclusivement au candidat décrit dans le CV fourni.
+  const LUCY_SYSTEM = `Tu es Lucy — Career Manager & Strategist IA, exclusivement dédiée au candidat décrit dans le CV fourni.
 
-Tu opères comme une consultante senior en recrutement avec 20 ans d\'expertise dans :
-- Le marché tech et digital français (Paris / Île-de-France)
-- L\'optimisation ATS, le positionnement exécutif, le personal branding
-- La dynamique des cabinets de recrutement et des ESN
+Tu opères comme consultante senior avec expertise sur :
+- Le métier et le secteur de CE candidat (déduits du CV)
+- Le marché de l\'emploi français et européen
+- L\'optimisation ATS, le positionnement professionnel, le personal branding
+- Les dynamiques ESN / freelance / recrutement
+
+Mission : maximiser la visibilité, le positionnement et le taux de conversion candidature → entretien → offre de ce candidat.
 
 PERSONNALITÉ & RÈGLES ABSOLUES :
 - Direct. Honnête. Zéro flatterie. Zéro hallucination.
@@ -1924,6 +1976,7 @@ Génère un CV ATS-optimisé. Respecte exactement ces balises :
       {role:'system', content: LUCY_SYSTEM},
       {role:'user',   content: userPrompt}
     ], 2500, 0.4);
+    if (isDemo) localStorage.setItem('lj_demo_lucy','1');
 
     // Formatter le markdown basique
 

@@ -66,13 +66,41 @@ def scrape_ft(keywords, contracts):
     except Exception as e: print(f"[FT] {e}")
     return jobs
 
+def detect_contract(title, desc="", fallback="Non précisé"):
+    """Détecte le type de contrat depuis le texte de l'offre (au lieu de l'inventer)."""
+    t = (title + " " + desc[:200]).lower()
+    if "alternance" in t or "apprentissage" in t or "apprenti" in t: return "alternance"
+    if "stage" in t or "stagiaire" in t or "internship" in t:        return "stage"
+    if "freelance" in t or "indépendant" in t:                        return "freelance"
+    if "cdd" in t:  return "CDD"
+    if "cdi" in t:  return "CDI"
+    return fallback
+
+EXCLUDE_WORDS = {
+    "alternance": ["alternance","apprentissage","apprenti"],
+    "stage":      ["stage","stagiaire","internship"],
+}
+
+def contract_ok(job, contracts):
+    """Exclut les offres alternance/stage si ces contrats ne sont pas sélectionnés."""
+    title = job.get("title","").lower()
+    for ct, words in EXCLUDE_WORDS.items():
+        if ct not in contracts and any(w in title for w in words):
+            return False
+    return True
+
 def scrape_adzuna(keywords, contracts):
     jobs, seen = [], set()
+    # Params officiels Adzuna : permanent=1 (CDI), contract=1 (CDD/freelance)
+    az_flags = ""
+    cset = set(contracts)
+    if cset and cset <= {"CDI","POEI"}:              az_flags = "&permanent=1"
+    elif cset and cset <= {"CDD","freelance"}:       az_flags = "&contract=1"
     try:
         for kw in keywords[:3]:
             url = (f"https://api.adzuna.com/v1/api/jobs/fr/search/1?app_id={AZ_ID}&app_key={AZ_KEY}"
                    f"&results_per_page=10&what={urllib.parse.quote_plus(kw)}"
-                   f"&where=Ile-de-France&distance=30&max_days_old=5&sort_by=date&content-type=application/json")
+                   f"&where=Ile-de-France&distance=30&max_days_old=5&sort_by=date{az_flags}&content-type=application/json")
             d = json.loads(fetch(url))
             for j in d.get("results",[]):
                 t=j.get("title",""); co=j.get("company",{}).get("display_name","")
@@ -80,7 +108,7 @@ def scrape_adzuna(keywords, contracts):
                 if jid in seen: continue
                 seen.add(jid)
                 sm,sx=j.get("salary_min"),j.get("salary_max")
-                jobs.append({"id":jid,"title":t,"company":co,"location":j.get("location",{}).get("display_name","IDF"),"salary":f"{round(sm/1000)}k-{round(sx/1000)}k€" if sm and sx else "Non précisé","description":j.get("description","")[:800],"link":j.get("redirect_url",""),"source":"Adzuna","date":j.get("created",""),"contract":contracts[0] if contracts else "CDI"})
+                jobs.append({"id":jid,"title":t,"company":co,"location":j.get("location",{}).get("display_name","IDF"),"salary":f"{round(sm/1000)}k-{round(sx/1000)}k€" if sm and sx else "Non précisé","description":j.get("description","")[:800],"link":j.get("redirect_url",""),"source":"Adzuna","date":j.get("created",""),"contract":detect_contract(t, j.get("description",""), contracts[0] if contracts else "Non précisé")})
     except Exception as e: print(f"[Adzuna] {e}")
     return jobs
 
@@ -137,7 +165,7 @@ def scrape_rss(keywords, contracts):
                 jid = source.lower()+"_"+"".join(c for c in raw if c.isalnum())
                 if jid in seen: continue
                 seen.add(jid)
-                jobs.append({"id":jid,"title":title,"company":company,"location":"IDF","salary":"Non précisé","description":desc,"link":link,"source":source,"date":date,"contract":contracts[0] if contracts else "CDI"})
+                jobs.append({"id":jid,"title":title,"company":company,"location":"IDF","salary":"Non précisé","description":desc,"link":link,"source":source,"date":date,"contract":detect_contract(title, desc, contracts[0] if contracts else "Non précisé")})
         except Exception as e: print(f"[RSS {source}] {e}")
 
     return jobs
@@ -190,6 +218,7 @@ class handler(BaseHTTPRequestHandler):
             )
             return kw_in_desc >= 2
 
+        jobs = [j for j in jobs if contract_ok(j, contracts)]
         filtered = [j for j in jobs if is_relevant(j, keywords)]
         # Si le filtre est trop strict (< 3 résultats), relaxer sur description uniquement
         if len(filtered) < 3:

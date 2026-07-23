@@ -1449,9 +1449,9 @@ function render() {
 function toggleSel(id){
   if(sel.has(id)){ sel.delete(id); }
   else {
-    const limit = isDemo ? 1 : 10;
+    const limit = isDemo ? 3 : 10;
     if(sel.size>=limit){
-      if(isDemo) toast('Mode démo — connectez-vous pour sélectionner plusieurs offres','info');
+      if(isDemo) toast('Mode démo — 3 offres max · Connectez-vous pour plus','info');
       else toast('Maximum 10 — au-delà le rate limit Groq bloque tout','err');
       return;
     }
@@ -1514,11 +1514,11 @@ function doReset(){
 
 // ── GENERATE
 async function genSelected(){
-  if(!getKey()){ toast('Clé Groq indisponible — mode démo ou reconnectez-vous','err'); return; }
+  if(!getKey() && !isDemo){ toast('Clé Groq indisponible — reconnectez-vous','err'); return; }
   if(!cvTxt){ toast('Uploadez votre CV d\'abord','err'); return; }
-  // Mode démo : 1 seule génération autorisée
-  if(isDemo && results.length >= 1){
-    toast('Mode démo — 1 candidature max · Connectez-vous pour plus','info');
+  // Mode démo : 3 générations autorisées
+  if(isDemo && results.length >= 3){
+    toast('Mode démo — 3 candidatures max · Connectez-vous pour plus','info');
     setTimeout(()=>document.getElementById('loginov').classList.remove('hide'),1500);
     return;
   }
@@ -1617,10 +1617,10 @@ Candidature ${job.title} — [Prénom NOM]
 
 
 async function genSelected(){
-  if(!getKey()){ toast('Clé Groq indisponible — mode démo ou reconnectez-vous','err'); return; }
+  if(!getKey() && !isDemo){ toast('Clé Groq indisponible — reconnectez-vous','err'); return; }
   if(!cvTxt){ toast('Uploadez votre CV d\'abord','err'); return; }
-  // Mode démo : 1 seule génération autorisée
-  if(isDemo && results.length >= 1){
+  // Mode démo : 3 générations autorisées
+  if(isDemo && results.length >= 3){
     const b = document.getElementById('loginov');
     document.getElementById('loginov').classList.remove('hide');
     toast('Mode démo — connectez-vous pour générer plusieurs candidatures','info');

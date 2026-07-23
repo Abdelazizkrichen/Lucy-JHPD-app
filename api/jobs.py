@@ -1,8 +1,8 @@
 """Lucy — Job scraping (Vercel)
-Sources légales: France Travail (API officielle) + Adzuna (API officielle)
-               + APEC (API publique organisme paritaire) + Indeed RSS + Cadremploi RSS
+Sources légales: France Travail (API officielle) + Adzuna (API officielle) + Jooble (API officielle)
 """
-import json, urllib.request, urllib.parse, ssl, time, gzip, re
+import json, os, urllib.request, urllib.parse, ssl, time, gzip, re
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler
 
 SSL = ssl.create_default_context()
@@ -10,10 +10,23 @@ SSL.check_hostname = False
 SSL.verify_mode = ssl.CERT_NONE
 CORS = {"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"GET,POST,OPTIONS","Access-Control-Allow-Headers":"Content-Type"}
 
-FT_APP = "PAR_lucyjobhunter_b4ed148e50022211273f40b6f755af73ece7c4b284eb27ed260ec3104fe697af"
-FT_SEC = "9270acaa586d9a752533dc92163a1c127c976eddd5ad9aa6f889759d1e68e62b"
-AZ_ID  = "cbe5b72d"
-AZ_KEY = "74845cedd88ff4283ce7ec02f573d733"
+# Clés en variables d'environnement Vercel — jamais en dur dans le code public
+FT_APP     = os.environ.get("FT_CLIENT_ID", "")
+FT_SEC     = os.environ.get("FT_CLIENT_SECRET", "")
+AZ_ID      = os.environ.get("AZ_APP_ID",  "cbe5b72d")
+AZ_KEY     = os.environ.get("AZ_APP_KEY", "74845cedd88ff4283ce7ec02f573d733")
+JOOBLE_KEY = os.environ.get("JOOBLE_KEY", "")
+MAX_AGE_DAYS = 31  # jamais d'offre de plus d'un mois
+
+def parse_date(d):
+    """Date ISO → datetime naïf UTC. None si illisible."""
+    if not d: return None
+    try:
+        dt = datetime.fromisoformat(str(d).replace("Z", "+00:00"))
+        if dt.tzinfo: dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt
+    except Exception:
+        return None
 UA     = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/121.0 Safari/537.36"
 
 FT_CONTRACT = {"CDI":"CDI","CDD":"CDD","freelance":"MIS","stage":"STA","alternance":"CTA","professionalisation":"CPI","POEI":"CDI"}
@@ -44,9 +57,8 @@ def ft_token():
     return _ft_cache["tok"]
 
 def scrape_ft(keywords, contracts):
-    from datetime import datetime, timedelta
     now = datetime.utcnow()
-    mn = (now-timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    mn = (now-timedelta(days=MAX_AGE_DAYS)).strftime("%Y-%m-%dT%H:%M:%SZ")
     mx = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     jobs, seen = [], set()
     try:
@@ -100,7 +112,7 @@ def scrape_adzuna(keywords, contracts):
         for kw in keywords[:3]:
             url = (f"https://api.adzuna.com/v1/api/jobs/fr/search/1?app_id={AZ_ID}&app_key={AZ_KEY}"
                    f"&results_per_page=10&what={urllib.parse.quote_plus(kw)}"
-                   f"&where=Ile-de-France&distance=30&max_days_old=5&sort_by=date{az_flags}&content-type=application/json")
+                   f"&where=Ile-de-France&distance=30&max_days_old=31&sort_by=date{az_flags}&content-type=application/json")
             d = json.loads(fetch(url))
             for j in d.get("results",[]):
                 t=j.get("title",""); co=j.get("company",{}).get("display_name","")
@@ -112,62 +124,28 @@ def scrape_adzuna(keywords, contracts):
     except Exception as e: print(f"[Adzuna] {e}")
     return jobs
 
-def scrape_apec(keywords, contracts):
-    """APEC — organisme paritaire public, API JSON non authentifiée"""
+def scrape_jooble(keywords, contracts):
+    """Jooble — API REST officielle (jooble.org/api/about), clé gratuite"""
     jobs, seen = [], set()
+    if not JOOBLE_KEY: return jobs
     try:
-        for kw in keywords[:3]:
-            url = (f"https://www.apec.fr/cms/webservices/rechercheOffre/results"
-                   f"?motsCles={urllib.parse.quote_plus(kw)}&lieu=IDF&nbParPage=10&page=0&tri=1")
-            text = fetch(url, {"Accept":"application/json","X-Requested-With":"XMLHttpRequest","Referer":"https://www.apec.fr/candidat/recherche-emploi.html"})
-            data = json.loads(text)
-            resultats = data.get("resultats") or data.get("data") or data.get("offres") or []
-            for o in resultats:
-                num = str(o.get("numeroOffre") or o.get("numOffre") or o.get("id") or "")
-                if not num: continue
-                jid = "apec_"+num
-                if jid in seen: continue
+        for kw in keywords[:2]:  # limite : 500 requêtes/mois sur le plan gratuit
+            body = json.dumps({"keywords": kw, "location": "Ile-de-France"}).encode()
+            d = json.loads(fetch(f"https://jooble.org/api/{JOOBLE_KEY}", {"Content-Type": "application/json"}, body))
+            for j in d.get("jobs", []):
+                jid = "jb_" + str(j.get("id", ""))
+                if not j.get("id") or jid in seen: continue
                 seen.add(jid)
-                lieu = o.get("lieuTravail") or o.get("lieu") or {}
-                loc = (lieu.get("libelle","IDF") if isinstance(lieu,dict) else str(lieu)) or "IDF"
-                co = o.get("entreprise",{})
-                company = o.get("nomEntreprise") or (co.get("nom") if isinstance(co,dict) else str(co)) or "Confidentiel"
-                jobs.append({"id":jid,"title":o.get("intitule") or o.get("titre") or "","company":company,"location":loc,"salary":o.get("salaireTexte") or "Non précisé","description":str(o.get("texteOffre") or o.get("description") or o.get("accroche") or "")[:800],"link":f"https://www.apec.fr/candidat/recherche-emploi.html/emploi/{num}","source":"APEC","date":o.get("datePublication") or ""})
-    except Exception as e: print(f"[APEC] {e}")
-    return jobs
-
-def scrape_rss(keywords, contracts):
-    """Indeed RSS + Cadremploi RSS — flux publics officiels"""
-    jobs, seen = [], set()
-
-    rss_sources = []
-    for kw in keywords[:2]:
-        kw_enc = urllib.parse.quote_plus(kw)
-        rss_sources += [
-            (f"https://fr.indeed.com/rss?q={kw_enc}&l=Ile-de-France&sort=date", "Indeed"),
-            (f"https://www.cadremploi.fr/api/offres/search?q={kw_enc}&l=idf&format=rss", "Cadremploi"),
-        ]
-
-    for url, source in rss_sources:
-        try:
-            xml = fetch(url, {"Accept":"application/rss+xml,application/xml,text/xml"})
-            items = re.findall(r'<item>(.*?)</item>', xml, re.DOTALL)
-            for item in items[:8]:
-                def tag(t): m=re.search(f'<{t}[^>]*><!\\[CDATA\\[(.*?)\\]\\]></{t}>',item,re.DOTALL); return m.group(1).strip() if m else (re.search(f'<{t}[^>]*>(.*?)</{t}>',item,re.DOTALL) or type('',(),{'group':lambda s,x:''})()).group(1).strip()
-                title   = tag('title')
-                link    = tag('link') or re.search(r'<link>(.*?)</link>',item,re.DOTALL)
-                link    = link.group(1).strip() if hasattr(link,'group') else (link or '')
-                desc    = strip_html(tag('description'))[:800]
-                company = tag('source') or tag('company') or "Confidentiel"
-                date    = tag('pubDate') or tag('dc:date') or ""
-                if not title: continue
-                raw = (title+company).lower().replace(" ","")[:24]
-                jid = source.lower()+"_"+"".join(c for c in raw if c.isalnum())
-                if jid in seen: continue
-                seen.add(jid)
-                jobs.append({"id":jid,"title":title,"company":company,"location":"IDF","salary":"Non précisé","description":desc,"link":link,"source":source,"date":date,"contract":detect_contract(title, desc, contracts[0] if contracts else "Non précisé")})
-        except Exception as e: print(f"[RSS {source}] {e}")
-
+                title = j.get("title", "")
+                desc  = strip_html(j.get("snippet", ""))[:800]
+                jobs.append({"id": jid, "title": title,
+                    "company": j.get("company", "") or "Confidentiel",
+                    "location": j.get("location", "IDF"),
+                    "salary": j.get("salary", "") or "Non précisé",
+                    "description": desc, "link": j.get("link", ""),
+                    "source": "Jooble", "date": j.get("updated", ""),
+                    "contract": detect_contract(title, desc, j.get("type", "") or "Non précisé")})
+    except Exception as e: print(f"[Jooble] {e}")
     return jobs
 
 class handler(BaseHTTPRequestHandler):
@@ -187,7 +165,7 @@ class handler(BaseHTTPRequestHandler):
             self._json({"jobs":[],"total":0,"error":"Aucun mot-clé — uploadez votre CV"}); return
         print(f"[Scraping] kw={keywords} ct={contracts}")
         jobs, seen = [], set()
-        for fn in [scrape_ft, scrape_adzuna, scrape_apec, scrape_rss]:
+        for fn in [scrape_ft, scrape_adzuna, scrape_jooble]:
             try:
                 for j in fn(keywords, contracts):
                     if j["id"] not in seen: seen.add(j["id"]); jobs.append(j)
@@ -219,12 +197,17 @@ class handler(BaseHTTPRequestHandler):
             return kw_in_desc >= 2
 
         jobs = [j for j in jobs if contract_ok(j, contracts)]
+        # Jamais plus d'un mois d'ancienneté (date illisible = conservée)
+        cutoff = datetime.utcnow() - timedelta(days=MAX_AGE_DAYS)
+        jobs = [j for j in jobs if (parse_date(j.get("date")) or datetime.utcnow()) >= cutoff]
         filtered = [j for j in jobs if is_relevant(j, keywords)]
         # Si le filtre est trop strict (< 3 résultats), relaxer sur description uniquement
         if len(filtered) < 3:
             filtered = jobs  # garder tout si trop restrictif
 
-        print(f"[Done] {len(jobs)} brutes → {len(filtered)} pertinentes — FT+Adzuna+APEC+Indeed+Cadremploi")
+        # Tri chronologique : du plus récent au plus ancien
+        filtered.sort(key=lambda j: parse_date(j.get("date")) or datetime(1970, 1, 1), reverse=True)
+        print(f"[Done] {len(jobs)} brutes → {len(filtered)} pertinentes — FT+Adzuna+Jooble")
         self._json({"jobs":filtered,"total":len(filtered)})
     def do_GET(self): self._run()
     def do_POST(self): self._run()

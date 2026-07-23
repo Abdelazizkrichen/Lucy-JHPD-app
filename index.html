@@ -1410,7 +1410,7 @@ function render() {
     if(minSc>0 && j._sc!==undefined && j._sc<minSc) return false;
     return true;
   });
-  filtered.sort((a,b)=>(b._sc||0)-(a._sc||0));
+  filtered.sort((a,b)=>(new Date(b.date||0))-(new Date(a.date||0))); // chronologique : récent → ancien
   if(isDemo) filtered = filtered.slice(0,10);
 
   const hiddenByScore = minSc>0 ? jobs.filter(j=>j._sc!==undefined&&j._sc<minSc).length : 0;

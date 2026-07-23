@@ -760,6 +760,7 @@ async function extractPdf2(file) {
     }
     cvTxt=txt.trim(); localStorage.setItem('lj_cv',cvTxt);
     userProfile=null; localStorage.removeItem('lj_profile');
+    jobs=[]; doneSet=new Set(); localStorage.setItem('lj_j','[]'); // nouveau CV = purge des offres de l'ancien profil
     document.getElementById('cvdh2').textContent='✓ '+file.name;
     document.getElementById('cvds2').textContent=cvTxt.length+' caractères · Prêt';
     document.getElementById('cvdrop2').classList.add('ok');
@@ -997,6 +998,7 @@ async function loadUserData() {
       } else {
         // Pas de profil en base → reset local pour forcer ré-extraction
         userProfile=null; localStorage.removeItem('lj_profile');
+    jobs=[]; doneSet=new Set(); localStorage.setItem('lj_j','[]'); // nouveau CV = purge des offres de l'ancien profil
       }
     } else {
       // Nouveau compte (ex: Google) → syncer les données locales existantes vers Supabase
@@ -1233,6 +1235,7 @@ async function extractPdf(file) {
     localStorage.setItem('lj_cv', cvTxt);
     // Reset profil — nouveau CV = nouveaux keywords obligatoires
     userProfile=null; localStorage.removeItem('lj_profile');
+    jobs=[]; doneSet=new Set(); localStorage.setItem('lj_j','[]'); // nouveau CV = purge des offres de l'ancien profil
     document.getElementById('cvdh').textContent='✓ '+file.name;
     document.getElementById('cvds').textContent=cvTxt.length+' caractères extraits';
     document.getElementById('cvdrop').classList.add('ok');

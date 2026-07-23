@@ -69,11 +69,11 @@ def scrape_ft(keywords, contracts):
         ft_types = list({FT_CONTRACT[c] for c in contracts if c in FT_CONTRACT})
         # Aucun type valide sélectionné (ex: stage/alternance seuls) → recherche sans filtre contrat
         ct_params = [f"&typeContrat={ct}" for ct in ft_types[:2]] or [""]
-        for kw in keywords[:3]:
+        for kw in keywords[:5]:
             for ctp in ct_params:
                 url = (f"https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
                        f"?motsCles={urllib.parse.quote(kw)}&region=11{ctp}"
-                       f"&range=0-9&minCreationDate={mn}&maxCreationDate={mx}")
+                       f"&range=0-19&minCreationDate={mn}&maxCreationDate={mx}")
                 d = json.loads(fetch(url,{"Authorization":f"Bearer {tok}","Accept":"application/json"}))
                 for o in d.get("resultats",[]):
                     jid = "ft_"+o["id"]

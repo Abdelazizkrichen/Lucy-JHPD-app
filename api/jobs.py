@@ -1,5 +1,5 @@
 """Lucy — Job scraping (Vercel)
-Sources légales: France Travail (API officielle) + Adzuna (API officielle) + Jooble (API officielle)
+Sources légales: France Travail + Adzuna + Jooble + Careerjet (APIs officielles)
 """
 import json, os, urllib.request, urllib.parse, ssl, time, gzip, re
 from datetime import datetime, timedelta, timezone
@@ -16,6 +16,7 @@ FT_SEC     = os.environ.get("FT_CLIENT_SECRET", "")
 AZ_ID      = os.environ.get("AZ_APP_ID",  "cbe5b72d")
 AZ_KEY     = os.environ.get("AZ_APP_KEY", "74845cedd88ff4283ce7ec02f573d733")
 JOOBLE_KEY = os.environ.get("JOOBLE_KEY", "")
+CJ_AFFID   = os.environ.get("CAREERJET_AFFID", "")
 MAX_AGE_DAYS = 31  # jamais d'offre de plus d'un mois
 
 def parse_date(d):
@@ -33,6 +34,7 @@ FT_CONTRACT = {"CDI":"CDI","CDD":"CDD","freelance":"MIS","stage":"STA","alternan
 AZ_CONTRACT = {"CDI":"permanent","CDD":"contract","freelance":"contract","stage":"internship","alternance":"apprenticeship","professionalisation":"apprenticeship","POEI":"permanent"}
 
 _ft_cache = {"tok": None, "exp": 0}
+_client = {"ip": "127.0.0.1", "ua": UA}
 
 def fetch(url, hdrs=None, data=None, timeout=12):
     req = urllib.request.Request(url, data=data, method="POST" if data else "GET")
@@ -148,6 +150,34 @@ def scrape_jooble(keywords, contracts):
     except Exception as e: print(f"[Jooble] {e}")
     return jobs
 
+def scrape_careerjet(keywords, contracts):
+    """Careerjet — API publique officielle pour partenaires (affid gratuit)"""
+    jobs, seen = [], set()
+    if not CJ_AFFID: return jobs
+    try:
+        for kw in keywords[:3]:
+            url = ("https://public.api.careerjet.net/search?locale_code=fr_FR"
+                   f"&keywords={urllib.parse.quote_plus(kw)}&location={urllib.parse.quote_plus('Ile-de-France')}"
+                   f"&affid={CJ_AFFID}&user_ip={urllib.parse.quote_plus(_client['ip'])}"
+                   f"&user_agent={urllib.parse.quote_plus(_client['ua'])}&sort=date&pagesize=10&page=1")
+            d = json.loads(fetch(url, {"Accept": "application/json"}))
+            if d.get("type") != "JOBS": continue
+            for j in d.get("jobs", []):
+                title = j.get("title", "")
+                co    = j.get("company", "") or "Confidentiel"
+                jid   = "cj_" + "".join(c for c in (title + co).lower().replace(" ", "")[:24] if c.isalnum())
+                if not title or jid in seen: continue
+                seen.add(jid)
+                desc = strip_html(j.get("description", ""))[:800]
+                jobs.append({"id": jid, "title": title, "company": co,
+                    "location": j.get("locations", "IDF") or "IDF",
+                    "salary": j.get("salary", "") or "Non précisé",
+                    "description": desc, "link": j.get("url", ""),
+                    "source": "Careerjet", "date": j.get("date", ""),
+                    "contract": detect_contract(title, desc)})
+    except Exception as e: print(f"[Careerjet] {e}")
+    return jobs
+
 class handler(BaseHTTPRequestHandler):
     def log_message(self,*a): pass
     def _cors(self):
@@ -163,9 +193,11 @@ class handler(BaseHTTPRequestHandler):
         contracts = [c.strip() for c in qs.get("ct",["CDI"])[0].split(",") if c.strip()] or ["CDI"]
         if not keywords:
             self._json({"jobs":[],"total":0,"error":"Aucun mot-clé — uploadez votre CV"}); return
+        _client["ip"] = (self.headers.get("x-forwarded-for", "127.0.0.1") or "127.0.0.1").split(",")[0].strip()
+        _client["ua"] = self.headers.get("user-agent", UA) or UA
         print(f"[Scraping] kw={keywords} ct={contracts}")
         jobs, seen = [], set()
-        for fn in [scrape_ft, scrape_adzuna, scrape_jooble]:
+        for fn in [scrape_ft, scrape_adzuna, scrape_jooble, scrape_careerjet]:
             try:
                 for j in fn(keywords, contracts):
                     if j["id"] not in seen: seen.add(j["id"]); jobs.append(j)
@@ -207,7 +239,7 @@ class handler(BaseHTTPRequestHandler):
 
         # Tri chronologique : du plus récent au plus ancien
         filtered.sort(key=lambda j: parse_date(j.get("date")) or datetime(1970, 1, 1), reverse=True)
-        print(f"[Done] {len(jobs)} brutes → {len(filtered)} pertinentes — FT+Adzuna+Jooble")
+        print(f"[Done] {len(jobs)} brutes → {len(filtered)} pertinentes — FT+Adzuna+Jooble+Careerjet")
         self._json({"jobs":filtered,"total":len(filtered)})
     def do_GET(self): self._run()
     def do_POST(self): self._run()

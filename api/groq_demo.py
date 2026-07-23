@@ -63,7 +63,11 @@ class handler(BaseHTTPRequestHandler):
         req = urllib.request.Request(
             GROQ_URL,
             data=json.dumps(payload).encode(),
-            headers={"Content-Type": "application/json", "Authorization": "Bearer " + key},
+            headers={
+                "Content-Type":  "application/json",
+                "Authorization": "Bearer " + key,
+                "User-Agent":    "Mozilla/5.0 (compatible; LucyJHPD/1.0)",
+            },
         )
         try:
             with urllib.request.urlopen(req, timeout=60) as r:

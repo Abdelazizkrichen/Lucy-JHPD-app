@@ -778,17 +778,7 @@ async function startDemo() {
   const btn=document.getElementById('startBtn'), sp=document.getElementById('startSp');
   btn.disabled=true; sp.classList.add('on');
   isDemo=true;
-  // Attendre que la clé démo soit chargée si ce n'est pas encore fait
-  if (!window._groqDemoKey) {
-    try {
-      const cfg = await fetch('/api/config').then(r=>r.json());
-      if (cfg.groq_demo_key) window._groqDemoKey = cfg.groq_demo_key;
-    } catch(e) { console.warn('config fetch:', e); }
-  }
-  if (!window._groqDemoKey) {
-    toast('Clé démo indisponible — vérifiez la variable GROQ_DEMO_KEY dans Vercel','err');
-    btn.disabled=false; sp.classList.remove('on'); return;
-  }
+  // Mode démo : les appels Groq passent par le proxy serveur /api/groq-demo — la clé ne quitte jamais le serveur
   // Afficher bannière démo
   const db=document.getElementById('demoBanner');
   if(db) db.style.display='flex';
@@ -825,8 +815,6 @@ async function initSupabase() {
   try {
     const res  = await fetch('/api/config');
     const cfg  = await res.json();
-    // Stocker la clé démo (jamais exposée dans le code)
-    if (cfg.groq_demo_key) window._groqDemoKey = cfg.groq_demo_key;
     if (!cfg.supabase_url || !cfg.supabase_anon_key) {
       showLoginError('Variables SUPABASE_URL / SUPABASE_ANON_KEY manquantes dans Vercel.');
       return;
@@ -924,7 +912,7 @@ function startDemo() {
     }
   }
   // En mode démo : clé démo fournie par serveur, pas besoin de config
-  const hasKey = gkey || (isDemo && window._groqDemoKey);
+  const hasKey = gkey || isDemo; // démo : proxy serveur
   if (!hasKey || !cvTxt) {
     if (isDemo && !cvTxt) return; // CV uploadé dans l'écran d'accueil
     if (!isDemo) { openSetup(); return; }
@@ -1260,11 +1248,7 @@ function arrayBufferToBase64(buf) {
 }
 
 async function extractProfile() {
-  const key = gkey || (isDemo && window._groqDemoKey ? window._groqDemoKey : '');
-  if(!key||!cvTxt) return;
-  // Temporairement setter gkey pour que groq() fonctionne
-  const _prevKey = gkey;
-  if(!gkey && key) gkey = key;
+  if((!gkey && !isDemo)||!cvTxt) return;
   try {
     // Double sanitisation avant envoi à Groq
     const safeCvTxt = cvTxt
@@ -1293,10 +1277,8 @@ async function extractProfile() {
     if(!isDemo) syncProfile();
   } catch(e) {
     console.error('extractProfile error:', e);
-    if(!_prevKey) gkey = '';
     throw e; // propager pour que scrape() voie l'erreur réelle
   }
-  if(!_prevKey) gkey = '';
 }
 async function scrape() {
   const btn=document.getElementById('scrpbtn'), sp=document.getElementById('scrpsp'), txt=document.getElementById('scrptxt');
@@ -1311,7 +1293,7 @@ async function scrape() {
       return;
     }
     // Profil pas encore extrait → extraire d'abord (bloquant)
-    const hasGroqKey = gkey || (isDemo && (window._groqDemoKey || true));
+    const hasGroqKey = gkey || isDemo;
     if (!userProfile?.keywords_recherche?.length && hasGroqKey) {
       txt.textContent='Analyse du CV...';
       showLoading('✦ Lucy analyse votre CV...\nExtraction des mots-clés de votre profil');
@@ -1391,14 +1373,18 @@ async function scoreOne(job) {
 
 // ── GROQ
 function getKey() {
-  return gkey || (isDemo ? (window._groqDemoKey || '') : '');
+  return gkey; // mode démo : pas de clé navigateur, groq() route vers le proxy
 }
 
 async function groq(messages,maxTokens=1500,temp=0.65,retry=0) {
   const key = getKey();
-  if (!key) throw new Error('Clé Groq manquante — configurez votre clé dans ⚙ Config');
-  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+  const useProxy = isDemo && !key; // démo sans clé perso → proxy serveur
+  if (!key && !useProxy) throw new Error('Clé Groq manquante — configurez votre clé dans ⚙ Config');
+  const url = useProxy ? '/api/groq-demo' : 'https://api.groq.com/openai/v1/chat/completions';
+  const headers = {'Content-Type':'application/json'};
+  if (!useProxy) headers['Authorization'] = 'Bearer '+key;
+  const res=await fetch(url,{
+    method:'POST', headers,
     body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:maxTokens,temperature:temp,messages})
   });
   if(res.status===429){

@@ -3,6 +3,7 @@
     { "source": "/api/jobs",       "destination": "/api/jobs"       },
     { "source": "/api/send-email", "destination": "/api/send_email" },
     { "source": "/api/config",     "destination": "/api/config"     },
+    { "source": "/api/groq-demo",  "destination": "/api/groq_demo"  },
     { "source": "/(.*)",           "destination": "/index.html"     }
   ]
 }

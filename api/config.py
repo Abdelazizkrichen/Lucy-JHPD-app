@@ -25,6 +25,5 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self._json({
             "supabase_url":      os.environ.get("SUPABASE_URL", ""),
-            "supabase_anon_key": os.environ.get("SUPABASE_ANON_KEY", ""),
-            "groq_demo_key":     os.environ.get("GROQ_DEMO_KEY", "")
+            "supabase_anon_key": os.environ.get("SUPABASE_ANON_KEY", "")
         })
